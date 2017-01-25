@@ -25,10 +25,11 @@ import help_window
 import c_path
 
 
-#ÏÔÊ¾ÖĞÎÄ
+#æ˜¾ç¤ºä¸­æ–‡
 QtCore.QTextCodec.setCodecForTr(QtCore.QTextCodec.codecForName("utf8"))
 QtCore.QTextCodec.setCodecForCStrings(QtCore.QTextCodec.codecForName("utf8"))
 QtCore.QTextCodec.setCodecForLocale(QtCore.QTextCodec.codecForName("system"))
+
 
 
 Grid_Color_List=[
@@ -51,7 +52,7 @@ class CMyApp(QtGui.QMainWindow):
                 self.m_Grid=CGrid(self)
                 self.m_Interface=CInterface(self)
 
-                self.setWindowTitle(self.tr("Ñ°Â·ÏÔÊ¾Æ÷"))
+                self.setWindowTitle(self.tr("å¯»è·¯æ˜¾ç¤ºå™¨"))
                 self.resize(2000,2000)
 
 
@@ -61,7 +62,7 @@ class CMyApp(QtGui.QMainWindow):
 
         def ImportTxtFile(self):
                 sFilter="Text Files(*.txt)"
-                fileName=QtGui.QFileDialog.getOpenFileName(self,self.tr("´ò¿ªÎÄ¼ş"),QtCore.QString(),self.tr(sFilter))
+                fileName=QtGui.QFileDialog.getOpenFileName(self,self.tr("æ‰“å¼€æ–‡ä»¶"),QtCore.QString(),self.tr(sFilter))
                 fileName=unicode(fileName, 'utf8', 'ignore').encode("gbk")
 
                 print "fileName is ",fileName
@@ -81,7 +82,7 @@ class CMyApp(QtGui.QMainWindow):
 
         def ExportToTxtFile(self):
                 sFilter="Text Files(*.txt)"
-                fileName=QtGui.QFileDialog.getOpenFileName(self,self.tr("´ò¿ªÎÄ¼ş"),QtCore.QString(),self.tr(sFilter))
+                fileName=QtGui.QFileDialog.getOpenFileName(self,self.tr("æ‰“å¼€æ–‡ä»¶"),QtCore.QString(),self.tr(sFilter))
                 fileName=unicode(fileName, 'utf8', 'ignore').encode("gbk")
 
                 print "fileName is ",fileName
@@ -103,21 +104,21 @@ class CMyApp(QtGui.QMainWindow):
 
 
         def OpenHelpWindow(self):
-                #ĞèÒª±£´æÎª³ÉÔ±±äÁ¿£¬²»È»»á±»ÊÍ·Å
+                #éœ€è¦ä¿å­˜ä¸ºæˆå‘˜å˜é‡ï¼Œä¸ç„¶ä¼šè¢«é‡Šæ”¾
                 self.m_CurWindow=help_window.Open()
                 self.m_CurWindow.show()
 
 
         def OpenAboutWindow(self):
-                QtGui.QMessageBox.about(self,self.tr("¹ØÓÚ"),self.tr(self.GetVersion()))
+                QtGui.QMessageBox.about(self,self.tr("å…³äº"),self.tr(self.GetVersion()))
 
 
         def GetVersion(self):
             sCode=\
 """
-×÷Õß£ºubrabbit
-°æ±¾£ºv0.001
-ÕâÊÇÒ»¸öÁ·Ï°ÓÃµÄ½çÃæ³ÌĞò
+ä½œè€…ï¼šubrabbit
+ç‰ˆæœ¬ï¼šv0.001
+è¿™æ˜¯ä¸€ä¸ªç»ƒä¹ ç”¨çš„ç•Œé¢ç¨‹åº
 """
             return sCode
 
@@ -158,13 +159,13 @@ class CInterface(object):
                 self.listWidget=QtGui.QListWidget()
                 self.showGraphStack=QtGui.QStackedWidget()
 
-                self.listWidget.insertItem(0,self.m_Parent.tr("ËµÃ÷"))
-                self.listWidget.insertItem(1,self.m_Parent.tr("»­Í¼"))
+                self.listWidget.insertItem(0,self.m_Parent.tr("è¯´æ˜"))
+                self.listWidget.insertItem(1,self.m_Parent.tr("ç”»å›¾"))
                 self.m_Parent.connect(self.listWidget,QtCore.SIGNAL("currentRowChanged(int)"),self.showGraphStack,QtCore.SLOT("setCurrentIndex(int)"))
 
                 self.mainLayout.addWidget(self.listWidget)
                 self.mainLayout.addWidget(self.tab_Widget)
-                #ÉèÖÃ²¼¾Ö¿Õ¼äµÄ±ÈÀı
+                #è®¾ç½®å¸ƒå±€ç©ºé—´çš„æ¯”ä¾‹
                 self.mainLayout.setStretchFactor(self.listWidget,1)
                 self.mainLayout.setStretchFactor(self.tab_Widget,29)
 
@@ -179,15 +180,15 @@ class CInterface(object):
                 self.showGraphStack.addWidget(tipWidget)
                 self.showGraphStack.addWidget(graphWidget)
 
-                self.tab_Widget.addTab(self.showGraphStack,self.m_Parent.tr("»­Í¼"))
-                self.tab_Widget.addTab(self.console_Edit,self.m_Parent.tr("¿ØÖÆÌ¨"))
-                self.tab_Widget.addTab(self.log_Edit,self.m_Parent.tr("ÈÕÖ¾"))
+                self.tab_Widget.addTab(self.showGraphStack,self.m_Parent.tr("ç”»å›¾"))
+                self.tab_Widget.addTab(self.console_Edit,self.m_Parent.tr("æ§åˆ¶å°"))
+                self.tab_Widget.addTab(self.log_Edit,self.m_Parent.tr("æ—¥å¿—"))
 
                 layout_Vertical_Top=QtGui.QHBoxLayout()
                 layout_Vertical_Bottom=QtGui.QHBoxLayout()
 
-                oButton1=QtGui.QPushButton(self.m_Parent.tr("µ¼Èëtxt"))
-                oButton2=QtGui.QPushButton(self.m_Parent.tr("µ¼³öÎªtxt"))
+                oButton1=QtGui.QPushButton(self.m_Parent.tr("å¯¼å…¥txt"))
+                oButton2=QtGui.QPushButton(self.m_Parent.tr("å¯¼å‡ºä¸ºtxt"))
                 layout_Vertical_Bottom.addWidget(oButton1)
                 layout_Vertical_Bottom.addWidget(oButton2)
                 layout_Vertical_Bottom.setStretchFactor(oButton1,1)
@@ -212,10 +213,10 @@ class CInterface(object):
                 layout_h2=QtGui.QHBoxLayout()
                 layout_h3=QtGui.QHBoxLayout()
 
-                label1=QtGui.QLabel(self.m_Parent.tr("³¤£º"))
-                label2=QtGui.QLabel(self.m_Parent.tr("¿í£º"))
-                label1.setFont(QtGui.QFont('Î¢ÈíÑÅºÚ',10))
-                label2.setFont(QtGui.QFont('Î¢ÈíÑÅºÚ',10))
+                label1=QtGui.QLabel(self.m_Parent.tr("é•¿ï¼š"))
+                label2=QtGui.QLabel(self.m_Parent.tr("å®½ï¼š"))
+                label1.setFont(QtGui.QFont('å¾®è½¯é›…é»‘',10))
+                label2.setFont(QtGui.QFont('å¾®è½¯é›…é»‘',10))
 
                 combo1=QtGui.QComboBox(self.m_Parent)
                 combo2=QtGui.QComboBox(self.m_Parent)
@@ -239,7 +240,7 @@ class CInterface(object):
                 layout_right.addLayout(layout_h1)
                 layout_right.addLayout(layout_h2)
 
-                label_title=QtGui.QLabel(self.m_Parent.tr("ÑÕÉ«ÓëÈ¨ÖØ"))
+                label_title=QtGui.QLabel(self.m_Parent.tr("é¢œè‰²ä¸æƒé‡"))
 
                 layout_right.addStretch(1)
                 layout_right.addWidget(label_title)
@@ -253,16 +254,16 @@ class CInterface(object):
                 for sColor in sList:
                         self.m_ColorRatios[idx]=sColor
                         if sColor==Color_Enter:
-                                sName="Èë¿Ú"
+                                sName="å…¥å£"
                                 self.m_EntranceColor=idx
                         elif sColor==Color_Exit:
-                                sName="³ö¿Ú"
+                                sName="å‡ºå£"
                                 self.m_ExitColor=idx
                         else:
                                 sName="%s"%idx
 
                         oLabel=QtGui.QLabel(self.m_Parent.tr("%s"%sName))
-                        oLabel.setFont(QtGui.QFont('Î¢ÈíÑÅºÚ',10))
+                        oLabel.setFont(QtGui.QFont('å¾®è½¯é›…é»‘',10))
                         oLabel.setAlignment(QtCore.Qt.AlignCenter)
 
                         oButton=QtGui.QPushButton(self.m_Parent.tr(""))
@@ -281,8 +282,8 @@ class CInterface(object):
 
 
                 layout_right.addStretch(1)
-                oLabel1=QtGui.QLabel(self.m_Parent.tr("µ±Ç°ËùÑ¡ÑÕÉ«£º"))
-                oLabel1.setFont(QtGui.QFont('Î¢ÈíÑÅºÚ',10))
+                oLabel1=QtGui.QLabel(self.m_Parent.tr("å½“å‰æ‰€é€‰é¢œè‰²ï¼š"))
+                oLabel1.setFont(QtGui.QFont('å¾®è½¯é›…é»‘',10))
                 self.curColorLabel=QtGui.QLabel(self.m_Parent.tr(""))
                 layout=QtGui.QHBoxLayout()
                 layout.addWidget(self.curColorLabel)
@@ -293,13 +294,13 @@ class CInterface(object):
                 layout_right.addLayout(layout)
 
 
-                oButton=QtGui.QPushButton(self.m_Parent.tr("ÅúÁ¿¶ÔÊó±êËùÑ¡Çø¿éÉÏÉ«"))
+                oButton=QtGui.QPushButton(self.m_Parent.tr("æ‰¹é‡å¯¹é¼ æ ‡æ‰€é€‰åŒºå—ä¸Šè‰²"))
                 func=partial(self.OnButtonClicked,"Set_Color")
                 oButton.clicked.connect(func)
                 layout_right.addWidget(oButton)
 
                 layout_right.addStretch(1)
-                oButton3=QtGui.QPushButton(self.m_Parent.tr("¿ªÊ¼»æÍ¼"))
+                oButton3=QtGui.QPushButton(self.m_Parent.tr("å¼€å§‹ç»˜å›¾"))
                 oButton3.clicked.connect(lambda: self.OnButtonClicked("Painting"))
                 layout_right.addStretch(1)
                 layout_right.addWidget(oButton3)
@@ -338,11 +339,11 @@ class CInterface(object):
 
         def SetTableColor(self,row,column,idx):
                 if not self.m_Parent.m_Grid.SetGrid((row,column),idx):
-                        QtGui.QMessageBox.information(self.m_Parent,"",self.m_Parent.tr("ÉèÖÃÑÕÉ«Ê§°Ü"))
+                        QtGui.QMessageBox.information(self.m_Parent,"",self.m_Parent.tr("è®¾ç½®é¢œè‰²å¤±è´¥"))
                         return 0
 
                 sColor=self.m_ColorRatios[idx]
-                #print "Ñ¡ÔñÁËÑÕÉ«£º %s "%str(sColor)
+                #print "é€‰æ‹©äº†é¢œè‰²ï¼š %s "%str(sColor)
                 owidget=QtGui.QWidget(self.m_Parent)
                 owidget.setStyleSheet('QWidget {background-color:%s}'%sColor)
                 self.tableWidget.setCellWidget(row,column,owidget)
@@ -387,37 +388,37 @@ class CInterface(object):
 
         def StatusBar_Init(self):
                 menubar=self.m_Parent.menuBar()
-                fileMenu=menubar.addMenu(self.m_Parent.tr("ÎÄ¼ş"))
-                helpMenu=menubar.addMenu(self.m_Parent.tr("°ïÖú"))
+                fileMenu=menubar.addMenu(self.m_Parent.tr("æ–‡ä»¶"))
+                helpMenu=menubar.addMenu(self.m_Parent.tr("å¸®åŠ©"))
 
                 self.m_Parent.statusBar()
 
-                #QtGui.QActionÊÇ¹ØÓÚ²Ëµ¥À¸¡¢¹¤¾ßÀ¸»ò×Ô¶¨Òå¿ì½İ¼ü¶¯×÷µÄ³éÏó¡£
-                exitAction=QtGui.QAction(QtGui.QIcon(""),self.m_Parent.tr("ÍË³ö"),self.m_Parent)
-                #¶¨Òå¿ì½İ¼ü¡£
+                #QtGui.QActionæ˜¯å…³äºèœå•æ ã€å·¥å…·æ æˆ–è‡ªå®šä¹‰å¿«æ·é”®åŠ¨ä½œçš„æŠ½è±¡ã€‚
+                exitAction=QtGui.QAction(QtGui.QIcon(""),self.m_Parent.tr("é€€å‡º"),self.m_Parent)
+                #å®šä¹‰å¿«æ·é”®ã€‚
                 exitAction.setShortcut("Ctrl+Q")
-                #µ±Êó±êÍ£ÁôÔÚ²Ëµ¥ÉÏÊ±£¬ÔÚ×´Ì¬À¸ÏÔÊ¾¸Ã²Ëµ¥µÄÏà¹ØĞÅÏ¢¡£
-                exitAction.setStatusTip(self.m_Parent.tr("ÍË³ö³ÌĞò"))
-                #Ñ¡¶¨ÌØ¶¨µÄ¶¯×÷£¬·¢³ö´¥·¢ĞÅºÅ¡£¸ÃĞÅºÅÓëQtGui.QApplication²¿¼şµÄquit()·½·¨
-                #Ïà¹ØÁª£¬Õâ½«»áÖÕÖ¹Ó¦ÓÃ³ÌĞò¡£
+                #å½“é¼ æ ‡åœç•™åœ¨èœå•ä¸Šæ—¶ï¼Œåœ¨çŠ¶æ€æ æ˜¾ç¤ºè¯¥èœå•çš„ç›¸å…³ä¿¡æ¯ã€‚
+                exitAction.setStatusTip(self.m_Parent.tr("é€€å‡ºç¨‹åº"))
+                #é€‰å®šç‰¹å®šçš„åŠ¨ä½œï¼Œå‘å‡ºè§¦å‘ä¿¡å·ã€‚è¯¥ä¿¡å·ä¸QtGui.QApplicationéƒ¨ä»¶çš„quit()æ–¹æ³•
+                #ç›¸å…³è”ï¼Œè¿™å°†ä¼šç»ˆæ­¢åº”ç”¨ç¨‹åºã€‚
                 exitAction.triggered.connect(QtGui.qApp.quit)
 
                 fileMenu.addAction(exitAction)
 
 
-                helpAction=QtGui.QAction(QtGui.QIcon(""),self.m_Parent.tr("ËµÃ÷"),self.m_Parent)
+                helpAction=QtGui.QAction(QtGui.QIcon(""),self.m_Parent.tr("è¯´æ˜"),self.m_Parent)
                 helpAction.setShortcut("Ctrl+H")
-                helpAction.setStatusTip(self.m_Parent.tr("µ¯³ö°ïÖú´°¿Ú"))
+                helpAction.setStatusTip(self.m_Parent.tr("å¼¹å‡ºå¸®åŠ©çª—å£"))
                 helpAction.triggered.connect(self.m_Parent.OpenHelpWindow)
 
-                aboutAction=QtGui.QAction(QtGui.QIcon(""),self.m_Parent.tr("¹ØÓÚ"),self.m_Parent)
-                aboutAction.setStatusTip(self.m_Parent.tr("³ÌĞò°æ±¾ºÍ×÷ÕßĞÅÏ¢"))
+                aboutAction=QtGui.QAction(QtGui.QIcon(""),self.m_Parent.tr("å…³äº"),self.m_Parent)
+                aboutAction.setStatusTip(self.m_Parent.tr("ç¨‹åºç‰ˆæœ¬å’Œä½œè€…ä¿¡æ¯"))
                 aboutAction.triggered.connect(self.m_Parent.OpenAboutWindow)
 
                 helpMenu.addAction(helpAction)
                 helpMenu.addAction(aboutAction)
 
-                toolBar=self.m_Parent.addToolBar(self.m_Parent.tr("ÍË³ö"))
+                toolBar=self.m_Parent.addToolBar(self.m_Parent.tr("é€€å‡º"))
                 toolBar.addAction(exitAction)
 
 
@@ -553,7 +554,7 @@ class CGrid(object):
 class CPainterPath(QtGui.QWidget):
 
         m_MoveVector=[
-        #°Ë¸ö·½ÏòµÄµ¥Î»ÏòÁ¿
+        #å…«ä¸ªæ–¹å‘çš„å•ä½å‘é‡
         (1,0),(0,1),(-1,1),(-1,0),(-1,-1),(0,-1),(1,-1)
         ]
 
@@ -568,13 +569,13 @@ class CPainterPath(QtGui.QWidget):
                 self.m_Exit=dInfo["Exit"]
                 self.m_Pos=dInfo["Pos"]
 
-                #Ê£ÓàÂ·¾¶ÁĞ±í
+                #å‰©ä½™è·¯å¾„åˆ—è¡¨
                 self.m_PathList=[]
-                #ÒÑ¾­¾­¹ıµÄÂ·¾¶ÁĞ±í£¬³õÊ¼Îª³ö¿Ú
+                #å·²ç»ç»è¿‡çš„è·¯å¾„åˆ—è¡¨ï¼Œåˆå§‹ä¸ºå‡ºå£
                 self.m_PassList=[]
 
                 self.m_WindowSize=2000
-                self.setWindowTitle(self.tr("ÏÔÊ¾´°¿Ú"))
+                self.setWindowTitle(self.tr("æ˜¾ç¤ºçª—å£"))
 
                 mainLayout=QtGui.QHBoxLayout(self)
                 leftLayout=QtGui.QVBoxLayout()
@@ -594,9 +595,9 @@ class CPainterPath(QtGui.QWidget):
                 mainLayout.setStretchFactor(rightLayout,1)
 
                 sList=[
-                ("¿ªÊ¼","Paint_Start"),("ÉÏÒ»²½","Paint_Last"),
-                ("ÏÂÒ»²½","Paint_Next"),("È«²¿Ö´ĞĞ","Paint_All"),
-                ("ÖØĞÂ¿ªÊ¼","Paint_Restart"),
+                ("å¼€å§‹","Paint_Start"),("ä¸Šä¸€æ­¥","Paint_Last"),
+                ("ä¸‹ä¸€æ­¥","Paint_Next"),("å…¨éƒ¨æ‰§è¡Œ","Paint_All"),
+                ("é‡æ–°å¼€å§‹","Paint_Restart"),
                 ]
                 oList=[]
                 for sName,sKey in sList:
@@ -616,7 +617,7 @@ class CPainterPath(QtGui.QWidget):
                 self.resize(self.m_WindowSize,self.m_WindowSize)
                 self.setFixedSize(self.width(),self.height())
 
-                #ÓÃ±í¸ñÊµÏÖ±ÈpainteventÒªºÃ
+                #ç”¨è¡¨æ ¼å®ç°æ¯”painteventè¦å¥½
                 #def paintEvent(self,event):
                 #        print "paintEvent !!!"
                 #        painter=QtGui.QPainter()
