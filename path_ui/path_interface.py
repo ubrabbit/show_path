@@ -22,6 +22,8 @@ from functools import partial
 import console_log
 import help_window
 
+import c_path
+
 
 #œ‘ æ÷–Œƒ
 QtCore.QTextCodec.setCodecForTr(QtCore.QTextCodec.codecForName("utf8"))
@@ -93,6 +95,8 @@ class CMyApp(QtGui.QMainWindow):
 
 
         def StartPainting(self):
+                c_path.Init_Path()
+
                 dInfo=self.m_Grid.GetPainterInfo()
                 self.m_CurWindow=CPainterPath(dInfo)
                 self.m_CurWindow.show()

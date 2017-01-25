@@ -29,7 +29,7 @@ typedef struct  Path_Container{
 }Path_Container;
 
 
-Path_Container* Create_Container();
+Path_Container* Create_Container(void);
 
 Path_Unit* Create_Path_Unit(int row,int col);
 

@@ -8,7 +8,7 @@
 """
 
 from distutils.core import setup
-import py2exe
+#import py2exe
 import sys
 
 
@@ -17,7 +17,7 @@ sys.path.append('path_code')
 
 
 #this allows to run it with a simple double click.
-sys.argv.append('py2exe')
+#sys.argv.append('py2exe')
 
 
 def GetAllFiles():
@@ -40,7 +40,10 @@ py2exe_options = {
 from distutils.core import setup, Extension
 
 # define the extension module
-module = Extension('c_path', sources=['c_interface.c','c_container.c','c_list.c','c_map.c','path_astar.c'])
+module = Extension('c_path', sources=[\
+  'c_interface.c','path_code/c_list.c','path_code/c_map.c',
+  'path_code/c_container.c','path_code/path_astar.c'\
+  ])
 
 # run the setup
 setup(ext_modules=[module])

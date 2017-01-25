@@ -27,6 +27,22 @@
 static Path_Map *g_Map;
 static Path_Container *g_Rlt_Container;
 
+static int Start_Algorithm(int **result){
+
+        int total;
+
+        total=0;
+        //在此加入算法
+        switch(CUR_PATH_MODE){
+                case PATH_MODE_ASTAR:
+                        break;
+                default:
+                        break;
+        }
+
+        return total;
+}
+
 
 static PyObject* Init_Path(PyObject *self,PyObject *args){
 
@@ -54,30 +70,30 @@ static PyObject* Reset_Path(PyObject *self,PyObject *args){
 
 static PyObject* Regist_Map(PyObject *self,PyObject *args){
         int row,col;
-        long enter_x,int enter_y,int exit_x,int exit_y;
+        long enter_x, enter_y, exit_x, exit_y;
         long len;
 
         PyObject *oEnter,*oExit,*oList;
 
         PyArg_ParseTuple(args,"iiOOO",&row,&col,&oEnter,&oExit,&oList);
 
-        enter_x=PyTuple_GetItem(oEnter,0);
-        enter_y=PyTuple_GetItem(oEnter,1);
-        exit_x=PyTuple_GetItem(oExit,0);
-        exit_y=PyTuple_GetItem(oExit,1);
+        PyArg_ParseTuple(PyTuple_GetItem(oEnter,0),"l",&enter_x);
+        PyArg_ParseTuple(PyTuple_GetItem(oEnter,1),"l",&enter_y);
+        PyArg_ParseTuple(PyTuple_GetItem(oExit,0),"l",&exit_x);
+        PyArg_ParseTuple(PyTuple_GetItem(oExit,1),"l",&exit_y);
 
-        g_Map=CreateMap(int row,int col,int enter_x,int enter_y,int exit_x,int exit_y);
+        g_Map=CreateMap(row,col,enter_x,enter_y,exit_x,exit_y);
 
         int i;
         long pos_row,pos_col,color;
         PyObject* temp;
-        len_lst=PyList_Size(oList);
+        len=PyList_Size(oList);
         for(i=0;i<len;i++){
                 temp=PyList_GetItem(oList,i);
 
-                pos_row=PyTuple_GetItem(temp,0);
-                pos_col=PyTuple_GetItem(temp,1);
-                color=PyTuple_GetItem(temp,2);
+                PyArg_ParseTuple(PyTuple_GetItem(temp,0),"l",&pos_row);
+                PyArg_ParseTuple(PyTuple_GetItem(temp,1),"l",&pos_col);
+                PyArg_ParseTuple(PyTuple_GetItem(temp,2),"l",&color);
 
                 SetMap_Value(g_Map,pos_row,pos_col,color);
         }
@@ -91,7 +107,7 @@ static PyObject* Path_Start(PyObject *self,PyObject *args){
         int i,row,col,total_unit;
         int *result;
         clock_t start, finish;
-        long cost;
+        long cost,size;
 
         assert(NULL != g_Map);
         assert(NULL == g_Rlt_Container);
@@ -130,38 +146,20 @@ static PyObject* Path_Start(PyObject *self,PyObject *args){
 }
 
 
-static int Start_Algorithm(int **result){
-
-        int i,row,col,total;
-        int *result;
-
-        total=0;
-        //在此加入算法
-        switch(CUR_PATH_MODE){
-                case PATH_MODE_ASTAR:
-                        break;
-                default:
-                        break;
-        }
-
-        return total;
-}
-
-
 static PyMethodDef PathMethods[] = {
-        {"Init_Path"},Init_Path, METH_VARARGS, "Init_Path"},
-        {"Reset_Path"},Reset_Path, METH_VARARGS, "Reset_Path"},
+        {"Init_Path",Init_Path, METH_VARARGS, "Init_Path"},
+        {"Reset_Path",Reset_Path, METH_VARARGS, "Reset_Path"},
         {"Regist_Map", Regist_Map, METH_VARARGS, "Regist_Map"},
         {"Path_Start", Path_Start, METH_VARARGS, "Path_Start"},
         {NULL,NULL,0,NULL},
 };
 
 
-PyMODINIT_FUNC initpath(void){
+PyMODINIT_FUNC initc_path(void){
         (void)Py_InitModule("c_path",PathMethods);
 }
 
 
 int test_path(void){
-
+        return 0;
 }

@@ -68,6 +68,6 @@ void* ListPopNode(Link_List* list){
 
 	ptr=tmp->data_ptr;
 	ListFreeNode(tmp);
-	return tmp;
+	return ptr;
 }
 

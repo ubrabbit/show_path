@@ -8,7 +8,7 @@
 #include "c_container.h"
 
 
-Path_Container* Create_Container(){
+Path_Container* Create_Container(void){
         Path_Container *container;
 
         container=(Path_Container*)malloc(sizeof(Path_Container));

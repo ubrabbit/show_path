@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#ifdef DEFINED_LIST
+#ifndef DEFINED_LIST
 #define DEFINED_LIST
 
 typedef struct list_node
