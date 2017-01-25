@@ -650,11 +650,14 @@ class CPainterPath(QtGui.QWidget):
         def RegistMap(self):
                 import c_path
 
+                print "RegistMap 1111111111111111111"
                 posList=[]
                 for pos,iColor in self.m_Pos.iteritems():
                         i,j=pos
                         posList.append( (i,j,iColor) )
+                print self.m_Col,self.m_Row,self.m_Entrance,self.m_Exit,posList
                 c_path.Regist_Map(self.m_Col,self.m_Row,self.m_Entrance,self.m_Exit,posList)
+                print "RegistMap 2222222222222222222"
 
 
         def OnButtonClicked(self,sFlag):

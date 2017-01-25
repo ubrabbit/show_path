@@ -75,14 +75,18 @@ static PyObject* Regist_Map(PyObject *self,PyObject *args){
 
         PyObject *oEnter,*oExit,*oList;
 
+        fprintf(stdout, "Regist_Map ------------11111111111111111\n");
         PyArg_ParseTuple(args,"iiOOO",&row,&col,&oEnter,&oExit,&oList);
 
-        PyArg_ParseTuple(PyTuple_GetItem(oEnter,0),"l",&enter_x);
-        PyArg_ParseTuple(PyTuple_GetItem(oEnter,1),"l",&enter_y);
-        PyArg_ParseTuple(PyTuple_GetItem(oExit,0),"l",&exit_x);
-        PyArg_ParseTuple(PyTuple_GetItem(oExit,1),"l",&exit_y);
+        fprintf(stdout, "Regist_Map ------------2222222222222222\n" );
+        enter_x=PyInt_AsLong(PyTuple_GetItem(oEnter,0));
+        enter_y=PyInt_AsLong(PyTuple_GetItem(oEnter,1));
+        exit_x=PyInt_AsLong(PyTuple_GetItem(oExit,0));
+        exit_y=PyInt_AsLong(PyTuple_GetItem(oExit,1));
+        fprintf(stdout, "Regist_Map ------------333333333333333333\n");
 
         g_Map=CreateMap(row,col,enter_x,enter_y,exit_x,exit_y);
+        fprintf(stdout, "Regist_Map ------------44444444444444 %d %d %ld %ld %ld %ld \n",row,col,enter_x,enter_y,exit_x,exit_y);
 
         int i;
         long pos_row,pos_col,color;
@@ -91,12 +95,13 @@ static PyObject* Regist_Map(PyObject *self,PyObject *args){
         for(i=0;i<len;i++){
                 temp=PyList_GetItem(oList,i);
 
-                PyArg_ParseTuple(PyTuple_GetItem(temp,0),"l",&pos_row);
-                PyArg_ParseTuple(PyTuple_GetItem(temp,1),"l",&pos_col);
-                PyArg_ParseTuple(PyTuple_GetItem(temp,2),"l",&color);
+                pos_row=PyInt_AsLong(PyTuple_GetItem(temp,0));
+                pos_col=PyInt_AsLong(PyTuple_GetItem(temp,1));
+                color=PyInt_AsLong(PyTuple_GetItem(temp,2));
 
                 SetMap_Value(g_Map,pos_row,pos_col,color);
         }
+        fprintf(stdout, "Regist_Map ------------66666666666666666666\n" );
 
         Py_RETURN_NONE;
 }
@@ -157,9 +162,4 @@ static PyMethodDef PathMethods[] = {
 
 PyMODINIT_FUNC initc_path(void){
         (void)Py_InitModule("c_path",PathMethods);
-}
-
-
-int test_path(void){
-        return 0;
 }
