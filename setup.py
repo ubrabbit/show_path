@@ -45,9 +45,6 @@ module = Extension('c_path', sources=[\
   'path_code/c_container.c','path_code/path_astar.c'\
   ])
 
-# run the setup
-setup(ext_modules=[module])
-
 setup(
       name = 'tool',
       version = '1.0',

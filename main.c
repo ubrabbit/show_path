@@ -23,6 +23,9 @@
 
 #define CUR_PATH_MODE PATH_MODE_ASTAR
 
+#define PYTHON_CHECK_NULL(value) if(!value){PyErr_Print();}
+#define PYTHON_CHECK_NULL_EXIT(value) if(!value){PyErr_Print();exit(-1);}
+
 
 static Path_Map *g_Map;
 static Path_Container *g_Rlt_Container;
@@ -42,7 +45,7 @@ static int Test_Algorithm(int **result){
         path_map=g_Map->path_map;
 
         int i,j,k,idx;
-        k=idx=0;
+        total=k=idx=0;
         for(i=0;i<row_size;i++)
                 for(j=0;j<col_size;j++){
                         k++;
@@ -52,6 +55,7 @@ static int Test_Algorithm(int **result){
                                 total++;
                         }
                 }
+        fprintf(stdout, "Test_Algorithm total : %d\n", total);
 
         return total;
 }
@@ -194,3 +198,19 @@ static PyMethodDef PathMethods[] = {
 PyMODINIT_FUNC initc_path(void){
         (void)Py_InitModule("c_path",PathMethods);
 }
+
+
+int main(void){
+
+        PyObject *pModule,*pFunc;
+        pModule=PyImport_Import(PyString_FromString("init"));
+        PYTHON_CHECK_NULL(pModule);
+        pFunc=PyObject_GetAttrString(pModule,"start");
+        PYTHON_CHECK_NULL(pFunc);
+
+        PYTHON_CHECK_NULL( PyObject_CallObject(pFunc,NULL) );
+
+        return 0;
+}
+
+

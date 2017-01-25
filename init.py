@@ -18,7 +18,7 @@ from PyQt4 import QtCore, QtGui
 import path_interface
 
 
-def main():
+def start():
 
         app = QtGui.QApplication(sys.argv)
         window = path_interface.CMyApp()
@@ -28,4 +28,4 @@ def main():
 
 
 if __name__ == "__main__":
-        main()
+        start()
