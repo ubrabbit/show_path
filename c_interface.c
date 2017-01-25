@@ -27,14 +27,44 @@
 static Path_Map *g_Map;
 static Path_Container *g_Rlt_Container;
 
-static int Start_Algorithm(int **result){
+static int Test_Algorithm(int **result){
+        int total;
+        int row_size,col_size,row,col;
+        int enter_x, enter_y, exit_x, exit_y;
+        int *path_map;
 
+        row_size=g_Map->row_size;
+        col_size=g_Map->col_size;
+        enter_x=g_Map->enter_x;
+        enter_y=g_Map->enter_y;
+        exit_x=g_Map->exit_x;
+        exit_y=g_Map->exit_y;
+        path_map=g_Map->path_map;
+
+        int i,j,k,idx;
+        k=idx=0;
+        for(i=0;i<row_size;i++)
+                for(j=0;j<col_size;j++){
+                        k++;
+                        if(k%2==0){
+                                (*result)[idx++]=i;
+                                (*result)[idx++]=j;
+                                total++;
+                        }
+                }
+
+        return total;
+}
+
+
+static int Start_Algorithm(int **result){
         int total;
 
         total=0;
         //在此加入算法
         switch(CUR_PATH_MODE){
                 case PATH_MODE_ASTAR:
+                        total=Test_Algorithm(result);
                         break;
                 default:
                         break;
@@ -123,6 +153,7 @@ static PyObject* Path_Start(PyObject *self,PyObject *args){
         memset(result,-1,size);
 
         start=clock();
+        total_unit=0;
         total_unit=Start_Algorithm(&result);
         finish=clock();
         cost=(long)(finish-start)/CLOCKS_PER_SEC;

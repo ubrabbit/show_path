@@ -280,7 +280,6 @@ class CInterface(object):
 
                         layout_right.addLayout(layout)
 
-
                 layout_right.addStretch(1)
                 oLabel1=QtGui.QLabel(self.m_Parent.tr("当前所选颜色："))
                 oLabel1.setFont(QtGui.QFont('微软雅黑',10))
@@ -660,6 +659,8 @@ class CPainterPath(QtGui.QWidget):
                 c_path.Regist_Map(self.m_Col,self.m_Row,self.m_Entrance,self.m_Exit,posList)
                 print "RegistMap 2222222222222222222"
 
+                self.Move_Start()
+
 
         def OnButtonClicked(self,sFlag):
                 print "OnButtonClicked ",sFlag
@@ -688,6 +689,7 @@ class CPainterPath(QtGui.QWidget):
 
                 import c_path
                 iCost,self.m_PathList=c_path.Path_Start()
+                print "Move_Start!!! ",iCost,self.m_PathList
 
 
         def Move_Restart(self):
