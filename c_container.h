@@ -10,34 +10,34 @@
 #include <string.h>
 
 #include "c_list.h"
-
+#include "c_map.h"
 
 #ifndef DEFINED_CONTAINER
 #define DEFINED_CONTAINER
 
 
 typedef struct Path_Unit{
-        int row;
-        int col;
+        MAP_POS_T row;
+        MAP_POS_T col;
 }Path_Unit;
 
 
 typedef struct  Path_Container{
         long cost;
-        int total_size;
+        MAP_POS_T total_size;
         Link_List *path_list;
 }Path_Container;
 
 
 Path_Container* Create_Container(void);
 
-Path_Unit* Create_Path_Unit(int row,int col);
+Path_Unit* Create_Path_Unit(MAP_POS_T row,MAP_POS_T col);
 
 void Free_Path_Unit(Path_Unit *unit);
 
 void Free_Path_Container(Path_Container *container);
 
-int Container_Add_Unit(Path_Container *container,int row,int col);
+int Container_Add_Unit(Path_Container *container,MAP_POS_T row, MAP_POS_T col);
 
 Path_Unit* Container_Pop_Unit(Path_Container *container);
 

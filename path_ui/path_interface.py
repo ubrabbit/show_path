@@ -25,6 +25,9 @@ import help_window
 import c_path
 
 
+VERSION=0.01
+
+
 #显示中文
 QtCore.QTextCodec.setCodecForTr(QtCore.QTextCodec.codecForName("utf8"))
 QtCore.QTextCodec.setCodecForCStrings(QtCore.QTextCodec.codecForName("utf8"))
@@ -36,12 +39,18 @@ Grid_Color_List=[
         "",
         "#aaffff","#aaaaff","#00aa7f","#00aaff",
         "#aa55ff","#555500","#55557f","#00007f",
-        "#aa0000","#000000",
+        "#aa0000",
 ]
 
 
 Color_Enter="#00ff7f"
 Color_Exit="#00ff00"
+Color_Block="#000000"
+
+Special_Colors=[Color_Enter,Color_Exit,Color_Block]
+
+
+DEFINE_REDIRECT_STDOUT = 1
 
 
 class CMyApp(QtGui.QMainWindow):
@@ -53,7 +62,9 @@ class CMyApp(QtGui.QMainWindow):
                 self.m_Interface=CInterface(self)
 
                 self.setWindowTitle(self.tr("寻路显示器"))
-                self.resize(2000,2000)
+
+                screen = QtGui.QDesktopWidget().screenGeometry() 
+                self.resize(screen.width(), screen.height()) 
 
 
         def __del__(self):
@@ -81,6 +92,10 @@ class CMyApp(QtGui.QMainWindow):
 
 
         def ExportToTxtFile(self):
+                if len(self.m_Interface.m_ColorInputs) != len(self.m_Interface.m_ColorRatios):
+                        QtGui.QMessageBox.information(self,"输入错误",self.tr("颜色权重未完全输入"))
+                        return
+
                 sFilter="Text Files(*.txt)"
                 fileName=QtGui.QFileDialog.getOpenFileName(self,self.tr("打开文件"),QtCore.QString(),self.tr(sFilter))
                 fileName=unicode(fileName, 'utf8', 'ignore').encode("gbk")
@@ -89,14 +104,22 @@ class CMyApp(QtGui.QMainWindow):
 
                 if not fileName:
                         return
+                if fileName=="config":
+                        QtGui.QMessageBox.information(self,"输入错误",self.tr("不能存入配置文件"))
+                        return
 
                 with open(fileName,"w+") as fobj:
                         sCode=self.m_Grid.SaveTxt()
                         fobj.write(sCode)
+                QtGui.QMessageBox.information(self,"保存",self.tr("保存成功！"))
 
 
         def StartPainting(self):
-                c_path.Init_Path()
+                if len(self.m_Interface.m_ColorInputs) != len(self.m_Interface.m_ColorRatios):
+                        QtGui.QMessageBox.information(self,"输入错误",self.tr("颜色权重未完全输入"))
+                        return
+
+                c_path.Reset_Path()
 
                 dInfo=self.m_Grid.GetPainterInfo()
                 self.m_CurWindow=CPainterPath(dInfo)
@@ -110,17 +133,21 @@ class CMyApp(QtGui.QMainWindow):
 
 
         def OpenAboutWindow(self):
-                QtGui.QMessageBox.about(self,self.tr("关于"),self.tr(self.GetVersion()))
+                QtGui.QMessageBox.about(self,self.tr("关于"),self.tr(self.GetAbout()))
+
+
+        def GetAbout(self):
+                sCode=\
+"""
+作者：ubrabbit
+版本：%s
+这是一个可以达成可视化寻路显示目的的界面程序
+"""%self.GetVersion()
+                return sCode
 
 
         def GetVersion(self):
-            sCode=\
-"""
-作者：ubrabbit
-版本：v0.001
-这是一个练习用的界面程序
-"""
-            return sCode
+                return "v%s"%VERSION
 
 
 class CInterface(object):
@@ -130,12 +157,14 @@ class CInterface(object):
                 self.m_Parent = parent
 
                 self.m_ColorRatios={}
+                self.m_ColorInputs={}
                 self.m_CurSelectColor=0
                 self.m_RowCnt=0
                 self.m_ColCnt=0
 
                 self.m_EntranceColor=0
                 self.m_ExitColor=0
+                self.m_BlockColor=0
 
                 try:
                         self.Layout_Init()
@@ -171,32 +200,37 @@ class CInterface(object):
 
 
         def InitGraphLayout(self):
-                self.console_Edit,self.log_Edit=console_log.Console_Init(self)
+                if DEFINE_REDIRECT_STDOUT:
+                        self.console_Edit,self.log_Edit=console_log.Console_Init(self)
+                else:
+                        console_Edit=QtGui.QTextEdit()
+                        log_Edit=QtGui.QTextEdit()
+                        self.console_Edit,self.log_Edit=console_Edit,log_Edit
 
                 graphWidget=QtGui.QWidget(self.m_Parent)
                 graphLayout=QtGui.QVBoxLayout(graphWidget)
 
                 tipWidget=QtGui.QWidget(self.m_Parent)
+                layout_Vertical=QtGui.QVBoxLayout(tipWidget)
+                layout_Horizon=QtGui.QHBoxLayout()
+                tips=QtGui.QTextEdit()
+                sText=self.m_Parent.GetAbout()
+                tips.setText(self.m_Parent.tr(sText))
+                tips.setEnabled(False)
+                layout_Vertical.addWidget(tips)
+                layout_Vertical.addLayout(layout_Horizon)
+                layout_Vertical.addStretch(5)
+
                 self.showGraphStack.addWidget(tipWidget)
                 self.showGraphStack.addWidget(graphWidget)
 
                 self.tab_Widget.addTab(self.showGraphStack,self.m_Parent.tr("画图"))
-                self.tab_Widget.addTab(self.console_Edit,self.m_Parent.tr("控制台"))
-                self.tab_Widget.addTab(self.log_Edit,self.m_Parent.tr("日志"))
+                if DEFINE_REDIRECT_STDOUT:
+                        self.tab_Widget.addTab(self.console_Edit,self.m_Parent.tr("控制台"))
+                        self.tab_Widget.addTab(self.log_Edit,self.m_Parent.tr("日志"))
 
                 layout_Vertical_Top=QtGui.QHBoxLayout()
                 layout_Vertical_Bottom=QtGui.QHBoxLayout()
-
-                oButton1=QtGui.QPushButton(self.m_Parent.tr("导入txt"))
-                oButton2=QtGui.QPushButton(self.m_Parent.tr("导出为txt"))
-                layout_Vertical_Bottom.addWidget(oButton1)
-                layout_Vertical_Bottom.addWidget(oButton2)
-                layout_Vertical_Bottom.setStretchFactor(oButton1,1)
-                layout_Vertical_Bottom.setStretchFactor(oButton2,1)
-                layout_Vertical_Bottom.addStretch(8)
-
-                oButton1.clicked.connect(lambda: self.OnButtonClicked("Import"))
-                oButton2.clicked.connect(lambda: self.OnButtonClicked("Export"))
 
                 #self.tableWidget=QtGui.QWidget(self.m_Parent)
                 self.tableWidget=QtGui.QTableWidget(self.m_Parent)
@@ -221,7 +255,7 @@ class CInterface(object):
                 combo1=QtGui.QComboBox(self.m_Parent)
                 combo2=QtGui.QComboBox(self.m_Parent)
 
-                sizeList=(50,100,200,400,500,600,800,1000)
+                sizeList=(20,50,100,200,400,500,1000,)
                 self.m_RowCnt=self.m_ColCnt=sizeList[0]
                 for obj in (combo1,combo2):
                         obj.setCurrentIndex(0)
@@ -245,26 +279,33 @@ class CInterface(object):
                 layout_right.addStretch(1)
                 layout_right.addWidget(label_title)
 
-
                 idx=0
                 self.m_CurSelectColor=idx
                 sList=Grid_Color_List
-                doorLst=[Color_Enter,Color_Exit]
+                doorLst=Special_Colors[:]
                 sList.extend( doorLst )
                 for sColor in sList:
                         self.m_ColorRatios[idx]=sColor
-                        if sColor==Color_Enter:
-                                sName="入口"
-                                self.m_EntranceColor=idx
-                        elif sColor==Color_Exit:
-                                sName="出口"
-                                self.m_ExitColor=idx
+                        if sColor in doorLst:
+                                if sColor==Color_Enter:
+                                        sName="入口"
+                                        self.m_EntranceColor=idx
+                                elif sColor==Color_Exit:
+                                        sName="出口"
+                                        self.m_ExitColor=idx
+                                elif sColor==Color_Block:
+                                        sName="障碍物"
+                                        self.m_BlockColor=idx
+                                self.m_ColorInputs[idx]=0
+
+                                oLabel=QtGui.QLabel(self.m_Parent.tr("%s"%sName))
+                                oLabel.setFont(QtGui.QFont('微软雅黑',10))
+                                oLabel.setAlignment(QtCore.Qt.AlignCenter)
                         else:
                                 sName="%s"%idx
-
-                        oLabel=QtGui.QLabel(self.m_Parent.tr("%s"%sName))
-                        oLabel.setFont(QtGui.QFont('微软雅黑',10))
-                        oLabel.setAlignment(QtCore.Qt.AlignCenter)
+                                oLabel=QtGui.QLineEdit()
+                                oLabel.connect(oLabel,QtCore.SIGNAL("textChanged(QString)"),partial(self.OnLineColorChanged,idx))
+                                oLabel.setText(QtCore.QString("0"))
 
                         oButton=QtGui.QPushButton(self.m_Parent.tr(""))
                         oButton.setStyleSheet('QWidget {background-color:%s}'%sColor)
@@ -274,9 +315,11 @@ class CInterface(object):
                         idx+=1
 
                         layout=QtGui.QHBoxLayout()
-                        #layout.addStretch(1)
                         layout.addWidget(oButton)
                         layout.addWidget(oLabel)
+                        layout.setStretchFactor(oButton,2)
+                        layout.setStretchFactor(oLabel,1)
+                        layout.addStretch(1)
 
                         layout_right.addLayout(layout)
 
@@ -300,17 +343,21 @@ class CInterface(object):
 
                 layout_right.addStretch(1)
                 oButton3=QtGui.QPushButton(self.m_Parent.tr("开始绘图"))
-                oButton3.clicked.connect(lambda: self.OnButtonClicked("Painting"))
+                oButton3.clicked.connect(partial(self.OnButtonClicked,"Painting"))
+                oButton4=QtGui.QPushButton(self.m_Parent.tr("重置"))
+                oButton4.clicked.connect(partial(self.OnButtonClicked,"ResetTable"))
                 layout_right.addStretch(1)
                 layout_right.addWidget(oButton3)
-
+                layout_right.addWidget(oButton4)
+                layout_right.setStretchFactor(oButton3,1)
+                layout_right.setStretchFactor(oButton4,1)
                 layout_right.addStretch(8)
 
                 graphLayout.addLayout(layout_Vertical_Top)
                 graphLayout.addLayout(layout_Vertical_Bottom)
                 graphLayout.setStretchFactor(layout_Vertical_Top,9)
                 graphLayout.setStretchFactor(layout_Vertical_Bottom,1)
-
+                graphLayout.addStretch(1)
 
         def ResetTableGridSize(self,iTotalRow,iTotalCol):
                 self.m_RowCnt=iTotalRow
@@ -343,10 +390,29 @@ class CInterface(object):
 
                 sColor=self.m_ColorRatios[idx]
                 #print "选择了颜色： %s "%str(sColor)
-                owidget=QtGui.QWidget(self.m_Parent)
+                owidget=QtGui.QWidget()
                 owidget.setStyleSheet('QWidget {background-color:%s}'%sColor)
                 self.tableWidget.setCellWidget(row,column,owidget)
                 return 1
+
+
+        def OnLineColorChanged(self,idx,sText):
+                sText=unicode(sText, 'utf8', 'ignore').encode("utf8")
+
+                print "OnLineEditChanged ",idx,sText
+
+                sText=sText.strip(" ")
+                sText=sText.strip("\t")
+                sText=sText.strip("\n")
+                if not sText.isdigit():
+                        sCode="必须输入整数， 当前 输入: %s"%(sText)
+                        QtGui.QMessageBox.information(self.m_Parent,"",self.m_Parent.tr(sCode))
+                        return
+                if not idx in self.m_ColorRatios:
+                        sCode="严重错误！所选颜色不存在！！！！！  %s"%(sText)
+                        QtGui.QMessageBox.critical(self.m_Parent,"",self.m_Parent.tr(sCode))
+                        return
+                self.m_ColorInputs[idx]=int(sText)
 
 
         def OnButtonClicked(self,sFlag,*param):
@@ -360,10 +426,6 @@ class CInterface(object):
                         self.m_CurSelectColor=idx
 
                         self.curColorLabel.setStyleSheet('QWidget {background-color:%s}'%sColor)
-                elif sFlag=="Import":
-                        self.m_Parent.ImportTxtFile()
-                elif sFlag=="Export":
-                        self.m_Parent.ExportToTxtFile()
                 elif sFlag=="Set_Color":
                         #oItems=self.tableWidget.selectedItems()
                         for oIndex in self.tableWidget.selectedIndexes():
@@ -372,6 +434,9 @@ class CInterface(object):
                                                 break
                 elif sFlag=="Painting":
                         self.m_Parent.StartPainting()
+                elif sFlag=="ResetTable":
+                        self.tableWidget.clear()
+                        self.ResetTableGridSize(10,10)
 
 
         def OnComboActivated(self,sFlag,sValue):
@@ -397,12 +462,24 @@ class CInterface(object):
                 #定义快捷键。
                 exitAction.setShortcut("Ctrl+Q")
                 #当鼠标停留在菜单上时，在状态栏显示该菜单的相关信息。
-                exitAction.setStatusTip(self.m_Parent.tr("退出程序"))
+                exitAction.setStatusTip(self.m_Parent.tr("Ctrl+Q 退出程序"))
                 #选定特定的动作，发出触发信号。该信号与QtGui.QApplication部件的quit()方法
                 #相关联，这将会终止应用程序。
                 exitAction.triggered.connect(QtGui.qApp.quit)
 
+                importAction=QtGui.QAction(QtGui.QIcon(""),self.m_Parent.tr("导入文件"),self.m_Parent)
+                importAction.setShortcut("Ctrl+I")
+                importAction.setStatusTip(self.m_Parent.tr("Ctrl+I 导入文件程序"))
+                importAction.triggered.connect(self.m_Parent.ImportTxtFile)
+
+                exportAction=QtGui.QAction(QtGui.QIcon(""),self.m_Parent.tr("保存文件"),self.m_Parent)
+                exportAction.setShortcut("Ctrl+S")
+                exportAction.setStatusTip(self.m_Parent.tr("Ctrl+S 保存文件"))
+                exportAction.triggered.connect(self.m_Parent.ExportToTxtFile)
+
                 fileMenu.addAction(exitAction)
+                fileMenu.addAction(importAction)
+                fileMenu.addAction(exportAction)
 
 
                 helpAction=QtGui.QAction(QtGui.QIcon(""),self.m_Parent.tr("说明"),self.m_Parent)
@@ -417,17 +494,20 @@ class CInterface(object):
                 helpMenu.addAction(helpAction)
                 helpMenu.addAction(aboutAction)
 
-                toolBar=self.m_Parent.addToolBar(self.m_Parent.tr("退出"))
+                toolBar=self.m_Parent.addToolBar(self.m_Parent.tr(""))
                 toolBar.addAction(exitAction)
+                toolBar.addAction(importAction)                
+                toolBar.addAction(exportAction)
 
 
 class CGrid(object):
 
         m_ReFindSize=re.compile("\$size\((\d+),(\d+)\)")
+        m_ReFineVersion=re.compile("\$version\((.+)\)")
 
         m_EnterFlag="${Enter}"
         m_ExitFlag="${Exit}"
-
+        m_BlockFlag="${Block}"
 
         def __init__(self,parent):
                 self.m_Parent=parent
@@ -436,6 +516,7 @@ class CGrid(object):
                 self.m_Col=0
                 self.m_Pos_Entrance=()
                 self.m_Pos_Export=()
+                self.m_BlockList=[]
 
                 self.m_GridPos={}
 
@@ -452,19 +533,27 @@ class CGrid(object):
                         self.m_GridPos[pos]=0
 
 
-        def SetGrid(self,pos,iColor):
-                if not self.ValidSetGrid(pos,iColor):
+        def SetGrid(self,pos,idx):
+                if not self.ValidSetGrid(pos,idx):
                         return 0
                 if pos==self.m_Pos_Entrance:
                         self.m_Pos_Entrance=()
                 if pos==self.m_Pos_Export:
                         self.m_Pos_Export=()
 
-                if iColor==self.m_Parent.m_Interface.m_EntranceColor:
+                if pos in self.m_BlockList:
+                        self.m_BlockList.remove(pos)
+
+                if idx==self.m_Parent.m_Interface.m_EntranceColor:
                         self.m_Pos_Entrance=pos
-                if iColor==self.m_Parent.m_Interface.m_ExitColor:
+                if idx==self.m_Parent.m_Interface.m_ExitColor:
                         self.m_Pos_Export=pos
-                self.m_GridPos[pos]=iColor
+
+                if idx==self.m_Parent.m_Interface.m_BlockColor:
+                        if not pos in self.m_BlockList:
+                                self.m_BlockList.append( pos )
+                else:
+                        self.m_GridPos[pos]=idx
                 return 1
 
 
@@ -480,20 +569,29 @@ class CGrid(object):
 
         def GetPainterInfo(self):
                 dInfo={}
+                dWeight={}
+                for pos,idx in self.m_GridPos.iteritems():
+                        weight=self.m_Parent.m_Interface.m_ColorInputs[idx]
+                        dWeight[pos]=weight
 
                 dInfo["Size"]=(self.m_Row,self.m_Col)
-                dInfo["Color"]=copy.copy(self.m_Parent.m_Interface.m_ColorRatios)
+                dInfo["Color"]=copy.copy(self.m_Parent.m_Interface.m_ColorInputs)
                 dInfo["Enter"]=self.m_Pos_Entrance
                 dInfo["Exit"]=self.m_Pos_Export
-                dInfo["Pos"]=copy.copy(self.m_GridPos)
+                dInfo["Block"]=self.m_BlockList
+                dInfo["Grid"]=copy.copy(self.m_GridPos)
+                dInfo["Weight"]=dWeight
                 dInfo["EnterColor"]=self.m_Parent.m_Interface.m_EntranceColor
                 dInfo["ExitColor"]=self.m_Parent.m_Interface.m_ExitColor
+
+                #print "GetPainterInfo  ",dInfo
                 return dInfo
 
 
         def SaveTxt(self):
                 sFile=\
-"""$size(%s,%s)
+"""$version(%s)
+$size(%s,%s)
 %s
 """
 
@@ -506,13 +604,15 @@ class CGrid(object):
                                         sKey=self.m_EnterFlag
                                 elif pos==self.m_Pos_Export:
                                         sKey=self.m_ExitFlag
+                                elif pos in self.m_BlockList:
+                                        sKey=self.m_BlockFlag
                                 else:
                                         iColor=self.m_GridPos[pos]
                                         sKey="%s"%iColor
                                 sList.append(sKey)
                         sContent.append( " ".join(sList) )
 
-                sFile=sFile%(self.m_Row,self.m_Col,"\n".join(sContent))
+                sFile=sFile%(VERSION,self.m_Row,self.m_Col,"\n".join(sContent))
 
                 print "SaveTxt ",sFile
                 return sFile
@@ -526,6 +626,12 @@ class CGrid(object):
                 while(sHead==""):
                     sHead=sCodeLst.pop(0)
 
+                oGroup=self.m_ReFineVersion.match(sHead)
+                if not oGroup or oGroup.group(1).strip(" ")!="%s"%VERSION:
+                        QtGui.QMessageBox.information(self.m_Parent,"导入错误",self.m_Parent.tr("文件版本已经不一致"))
+                        return 0,0,{}
+
+                sHead=sCodeLst.pop(0)
                 oGroup=self.m_ReFindSize.match(sHead)
                 iRow,iCol=int(oGroup.group(1)),int(oGroup.group(2))
                 dPos={}
@@ -538,11 +644,14 @@ class CGrid(object):
                                 if sList:
                                         sKey=sList.pop(0)
                                         if sKey==self.m_EnterFlag:
-                                                iColor=self.m_Parent.m_Interface.m_EntranceColor
+                                                idx=self.m_Parent.m_Interface.m_EntranceColor
                                         elif sKey==self.m_ExitFlag:
-                                                iColor=self.m_Parent.m_Interface.m_ExitColor
+                                                idx=self.m_Parent.m_Interface.m_ExitColor
+                                        elif sKey==self.m_BlockFlag:
+                                                idx=self.m_Parent.m_Interface.m_BlockColor
                                         else:
-                                                iColor=int(sKey)
+                                                idx=int(sKey)
+                                        iColor=idx
                                 else:
                                         iColor=0
                                 dPos[pos]=iColor
@@ -551,11 +660,6 @@ class CGrid(object):
 
 
 class CPainterPath(QtGui.QWidget):
-
-        m_MoveVector=[
-        #八个方向的单位向量
-        (1,0),(0,1),(-1,1),(-1,0),(-1,-1),(0,-1),(1,-1)
-        ]
 
         m_Path_Color="#55ff7f"
 
@@ -566,25 +670,32 @@ class CPainterPath(QtGui.QWidget):
                 self.m_Color=dInfo["Color"]
                 self.m_Entrance=dInfo["Enter"]
                 self.m_Exit=dInfo["Exit"]
-                self.m_Pos=dInfo["Pos"]
+                self.m_BlockList=dInfo["Block"]
+                self.m_Pos=dInfo["Grid"]
+                self.m_Weight=dInfo["Weight"]
 
                 #剩余路径列表
                 self.m_PathList=[]
+                self.m_PassList_Bak=[]
                 #已经经过的路径列表，初始为出口
                 self.m_PassList=[]
 
-                self.m_WindowSize=2000
+                self.m_Color_Bak={}
+
                 self.setWindowTitle(self.tr("显示窗口"))
 
                 mainLayout=QtGui.QHBoxLayout(self)
                 leftLayout=QtGui.QVBoxLayout()
                 rightLayout=QtGui.QVBoxLayout()
 
+                screen = QtGui.QDesktopWidget().screenGeometry() 
+                self.m_WindowSize_Col=screen.width()
+                self.m_WindowSize_Row=screen.height()
                 self.PaintMap()
 
                 bottomLayout=QtGui.QHBoxLayout()
                 leftLayout.addWidget(self.mapWidget)
-                #eftLayout.addLayout(bottomLayout)
+                leftLayout.addLayout(bottomLayout)
                 leftLayout.setStretchFactor(self.mapWidget,19)
                 leftLayout.setStretchFactor(bottomLayout,1)
 
@@ -604,62 +715,38 @@ class CPainterPath(QtGui.QWidget):
                         func=partial(self.OnButtonClicked,sKey)
                         oButton.clicked.connect(func)
                         oList.append(oButton)
+                        setattr(self,"m_Button_%s"%sKey,oButton)
+                        if sKey!="Paint_Start":
+                                oButton.setEnabled(False)
 
                 rightLayout.addStretch(1)
                 for oButton in oList:
                         rightLayout.addWidget(oButton)
                 for oButton in oList:
                         rightLayout.setStretchFactor(oButton,1)
+
+                layout_cost=QtGui.QHBoxLayout()
+                label1=QtGui.QLabel(self.tr("c层寻路开销："))
+                label2=QtGui.QLabel(self.tr("0"))
+                label3=QtGui.QLabel(self.tr(" ms"))
+                self.costLabel=label2;
+                label1.setFont(QtGui.QFont('微软雅黑',10))
+                label2.setFont(QtGui.QFont('微软雅黑',10))
+                label3.setFont(QtGui.QFont('微软雅黑',10))
+                layout_cost.addWidget(label1)
+                layout_cost.addWidget(label2)
+                layout_cost.addWidget(label3)
+                rightLayout.addLayout(layout_cost)
+
                 rightLayout.addStretch(5)
 
+                self.move_all_timer=QtCore.QTimer()
+                #设置窗口计时器
+                self.move_all_timer.timeout.connect(self.Move_All_Next)
+
                 self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-                self.resize(self.m_WindowSize,self.m_WindowSize)
-                self.setFixedSize(self.width(),self.height())
-
-                #用表格实现比paintevent要好
-                #def paintEvent(self,event):
-                #        print "paintEvent !!!"
-                #        painter=QtGui.QPainter()
-                #        painter.begin(self)
-                #        painter.end()
-
-
-        def PaintMap(self):
-                self.mapWidget=QtGui.QTableWidget(self)
-                self.mapWidget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
-
-                self.mapWidget.setColumnCount(self.m_Row)
-                self.mapWidget.setRowCount(self.m_Col)
-
-                iRowSize=max(15,min(20,self.m_WindowSize/self.m_Row))
-                iColSize=max(15,min(20,self.m_WindowSize/self.m_Col))
-                for col in range(self.m_Col):
-                        self.mapWidget.setColumnWidth(col,iColSize)
-                for row in range(self.m_Row):
-                        self.mapWidget.setRowHeight(row,iRowSize)
-
-
-                for pos,idx in self.m_Pos.iteritems():
-                        row,col=pos
-                        sColor=Grid_Color_List[idx]
-                        assert(self.SetColor(row,col,sColor)==1)
-
-                self.RegistMap()
-
-
-        def RegistMap(self):
-                import c_path
-
-                print "RegistMap 1111111111111111111"
-                posList=[]
-                for pos,iColor in self.m_Pos.iteritems():
-                        i,j=pos
-                        posList.append( (i,j,iColor) )
-                print self.m_Col,self.m_Row,self.m_Entrance,self.m_Exit,posList
-                c_path.Regist_Map(self.m_Col,self.m_Row,self.m_Entrance,self.m_Exit,posList)
-                print "RegistMap 2222222222222222222"
-
-                self.Move_Start()
+                self.resize(screen.width(), screen.height()) 
+                self.setFixedSize(screen.width(),screen.height())
 
 
         def OnButtonClicked(self,sFlag):
@@ -676,30 +763,108 @@ class CPainterPath(QtGui.QWidget):
                         self.Move_Restart()
 
 
+        def PaintMap(self):
+                self.mapWidget=QtGui.QTableWidget(self)
+                self.mapWidget.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+                self.PaintTables()
+                self.RegistMap()
+
+
+        def PaintTables(self):
+                self.mapWidget.setColumnCount(self.m_Row)
+                self.mapWidget.setRowCount(self.m_Col)
+
+                iRowSize=max(15,min(20,self.m_WindowSize_Row/self.m_Row))
+                iColSize=max(15,min(20,self.m_WindowSize_Col/self.m_Col))
+                for col in range(self.m_Col):
+                        self.mapWidget.setColumnWidth(col,iColSize)
+                for row in range(self.m_Row):
+                        self.mapWidget.setRowHeight(row,iRowSize)
+
+                for pos,idx in self.m_Pos.iteritems():
+                        row,col=pos
+                        sColor=Grid_Color_List[idx]
+                        assert(self.SetColor(row,col,sColor)==1)
+                        self.m_Color_Bak[pos]=sColor
+                for pos in self.m_BlockList:
+                        row,col=pos
+                        sColor=Color_Block
+                        assert(self.SetColor(row,col,sColor)==1)
+                        self.m_Color_Bak[pos]=sColor
+
+
+        def RegistMap(self):
+
+                posList=[]
+                for pos,weight in self.m_Weight.iteritems():
+                        i,j=pos
+                        posList.append( (i,j,weight) )
+                print self.m_Col,self.m_Row,self.m_Entrance,self.m_Exit,posList
+
+                try:
+                        iret=c_path.Regist_Map(self.m_Col,self.m_Row,self.m_Entrance,self.m_Exit,posList,self.m_BlockList)
+                        assert(iret==1)
+                except Exception,e:
+                        import traceback
+                        traceback.print_exc()
+                        QtGui.QMessageBox.information(self,"出错",self.tr("注册地图失败！"))
+
+
         def SetColor(self,row,col,sColor):
-                owidget=QtGui.QWidget(self)
+                owidget=QtGui.QWidget()
                 owidget.setStyleSheet('QWidget {background-color:%s}'%sColor)
                 self.mapWidget.setCellWidget(row,col,owidget)
-                print "SetColor ",row,col,sColor
                 return 1
 
 
         def Move_Start(self):
                 self.m_Start=1
+                self.m_Button_Paint_Start.setEnabled(False)
+                self.m_Button_Paint_Last.setEnabled(True)
+                self.m_Button_Paint_Next.setEnabled(True)
+                self.m_Button_Paint_All.setEnabled(True)
+                self.m_Button_Paint_Restart.setEnabled(True)
 
-                import c_path
-                iCost,self.m_PathList=c_path.Path_Start()
-                print "Move_Start!!! ",iCost,self.m_PathList
+                try:
+                        self.move_all_timer.stop()
+                        iCost,pTuple=c_path.Path_Start()
+                        #print "Move_Start!!! ",iCost,pTuple
+                        pList=list(pTuple)
+                except:
+                        import traceback
+                        traceback.print_exc()
+                        QtGui.QMessageBox.information(self,"出错",self.tr("寻路失败！"))
+                        return
+
+                if not pList:
+                        row_enter,col_enter=self.m_Entrance
+                        row_exit,col_exit=self.m_Exit
+                        if( abs(row_enter-row_exit) + abs(col_enter-col_exit) <=2 ):
+                                QtGui.QMessageBox.information(self,"结果",self.tr("入口就在出口旁边"))
+                                return
+                        QtGui.QMessageBox.information(self,"无结果",self.tr("入口到出口无可达路径"))
+                        return
+                self.costLabel.setText("%s"%iCost )
+
+                while (pList):
+                        i,j=pList.pop(0),pList.pop(0)
+                        self.m_PathList.append( (i,j) )
+                self.m_PathList.reverse()
 
 
         def Move_Restart(self):
                 if not getattr(self,"m_Start",0):
-                    return
+                        return
+                self.m_Button_Paint_Start.setEnabled(True)
+                self.m_Button_Paint_Last.setEnabled(False)
+                self.m_Button_Paint_Next.setEnabled(False)
+                self.m_Button_Paint_All.setEnabled(False)
+                self.m_Button_Paint_Restart.setEnabled(False)
+                self.move_all_timer.stop()
 
-                while( self.Move_LastStep() ):
-                        pass
-                self.m_PassList=[]
+                self.m_PassList=self.m_PassList_Bak[:]
                 del self.m_Start
+                self.PaintTables()
 
 
         def Move_LastStep(self):
@@ -711,13 +876,15 @@ class CPainterPath(QtGui.QWidget):
                         return 0
                 row,col=self.m_PassList.pop(-1)
                 self.m_PathList.insert(0,(row,col))
-                self.SetColor(row,col,"")
+
+                sColor=self.m_Color_Bak.get( (row,col), "" )
+                self.SetColor(row,col,sColor)
                 return 1
 
 
         def Move_NextStep(self):
                 if not getattr(self,"m_Start",0):
-                    return
+                        return 0
 
                 if not self.m_PathList:
                         print "no pass list"
@@ -731,37 +898,26 @@ class CPainterPath(QtGui.QWidget):
         def Move_All(self):
                 import time
                 if not getattr(self,"m_Start",0):
-                    return
+                        return
+                self.m_Button_Paint_Start.setEnabled(False)
+                self.m_Button_Paint_Last.setEnabled(False)
+                self.m_Button_Paint_Next.setEnabled(False)
+                self.m_Button_Paint_All.setEnabled(False)
+                self.m_Button_Paint_Restart.setEnabled(True)
 
-                while( self.Move_NextStep() ):
-                        time.sleep(1)
-                print "Move_All Finished!"
+                self.Move_All_Next()
+
+
+        def Move_All_Next(self):
+                self.move_all_timer.stop()
+                if( self.Move_NextStep() ):
+                        self.move_all_timer.start(100)
+      
+                self.update()
 
 
 if __name__ == "__main__":
         app = QtGui.QApplication(sys.argv)
-
-        idx=0
-        dColor={}
-        sList=Grid_Color_List
-        doorLst=[Color_Enter,Color_Exit]
-        sList.extend( doorLst )
-        for sColor in sList:
-                dColor[idx]=sColor
-                idx+=1
-
-        dInfo={}
-        dInfo["Size"]=(20,20)
-        dInfo["Color"]=dColor
-        dInfo["Enter"]=(1,0)
-        dInfo["Exit"]=(0,0)
-
-        dInfo["Pos"]={}
-        for i in range(20):
-                for j in range(20):
-                        dInfo["Pos"][(i,j)]=0
-        dInfo["Pos"][(1,0)]=11
-        dInfo["Pos"][(0,0)]=12
 
         window=CPainterPath(dInfo)
         window.m_PathList=[ (1,1),(1,2),(1,3),(0,3),(0,2),(0,1) ]

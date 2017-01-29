@@ -14,13 +14,13 @@ Path_Container* Create_Container(void){
         container=(Path_Container*)malloc(sizeof(Path_Container));
         container->cost=0;
         container->total_size=0;
-        container->path_list=CreateList();
+        container->path_list=CreateList(NULL);
 
         return container;
 }
 
 
-Path_Unit* Create_Path_Unit(int row,int col){
+Path_Unit* Create_Path_Unit(MAP_POS_T row, MAP_POS_T col){
         Path_Unit *unit;
 
         unit=(Path_Unit*)malloc(sizeof(Path_Unit));
@@ -51,7 +51,7 @@ void Free_Path_Container(Path_Container *container){
 }
 
 
-int Container_Add_Unit(Path_Container *container,int row,int col){
+int Container_Add_Unit(Path_Container *container,MAP_POS_T row, MAP_POS_T col){
         Path_Unit *unit=Create_Path_Unit(row,col);
 
         container->total_size++;

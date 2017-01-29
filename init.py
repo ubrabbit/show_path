@@ -17,14 +17,15 @@ from PyQt4 import QtCore, QtGui
 
 import path_interface
 
+import c_path
 
 def start():
-
-        app = QtGui.QApplication(sys.argv)
-        window = path_interface.CMyApp()
-        window.show()
-        app.installEventFilter(window)
-        sys.exit(app.exec_())
+	c_path.Init_Path()
+	app = QtGui.QApplication([])
+	window = path_interface.CMyApp()
+	window.show()
+	app.installEventFilter(window)
+	sys.exit(app.exec_())
 
 
 if __name__ == "__main__":
