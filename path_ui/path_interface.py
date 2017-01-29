@@ -63,8 +63,8 @@ class CMyApp(QtGui.QMainWindow):
 
                 self.setWindowTitle(self.tr("寻路显示器"))
 
-                screen = QtGui.QDesktopWidget().screenGeometry() 
-                self.resize(screen.width(), screen.height()) 
+                screen = QtGui.QDesktopWidget().screenGeometry()
+                self.resize(screen.width(), screen.height())
 
 
         def __del__(self):
@@ -84,11 +84,10 @@ class CMyApp(QtGui.QMainWindow):
                 with open(fileName,"r") as fobj:
                         sCode=fobj.read()
                         iRow,iCol,dPos=self.m_Grid.LoadTxt(sCode)
-
                         self.m_Interface.ResetTableGridSize(iRow,iCol)
                         for pos,iColor in dPos.iteritems():
-                            row,col=pos
-                            assert(self.m_Interface.SetTableColor(row,col,iColor)==1)
+                                row,col=pos
+                                self.m_Interface.SetTableColor(row,col,iColor)
 
 
         def ExportToTxtFile(self):
@@ -122,6 +121,7 @@ class CMyApp(QtGui.QMainWindow):
                 c_path.Reset_Path()
 
                 dInfo=self.m_Grid.GetPainterInfo()
+                print "StartPainting ",dInfo
                 self.m_CurWindow=CPainterPath(dInfo)
                 self.m_CurWindow.show()
 
@@ -384,12 +384,13 @@ class CInterface(object):
 
 
         def SetTableColor(self,row,column,idx):
+                print "SetTableColor ",row,column,idx
                 if not self.m_Parent.m_Grid.SetGrid((row,column),idx):
                         QtGui.QMessageBox.information(self.m_Parent,"",self.m_Parent.tr("设置颜色失败"))
                         return 0
 
                 sColor=self.m_ColorRatios[idx]
-                #print "选择了颜色： %s "%str(sColor)
+                print "选择了颜色： %s "%str(sColor)
                 owidget=QtGui.QWidget()
                 owidget.setStyleSheet('QWidget {background-color:%s}'%sColor)
                 self.tableWidget.setCellWidget(row,column,owidget)
@@ -436,7 +437,7 @@ class CInterface(object):
                         self.m_Parent.StartPainting()
                 elif sFlag=="ResetTable":
                         self.tableWidget.clear()
-                        self.ResetTableGridSize(10,10)
+                        self.ResetTableGridSize(self.m_RowCnt,self.m_ColCnt)
 
 
         def OnComboActivated(self,sFlag,sValue):
@@ -496,7 +497,7 @@ class CInterface(object):
 
                 toolBar=self.m_Parent.addToolBar(self.m_Parent.tr(""))
                 toolBar.addAction(exitAction)
-                toolBar.addAction(importAction)                
+                toolBar.addAction(importAction)
                 toolBar.addAction(exportAction)
 
 
@@ -529,6 +530,7 @@ class CGrid(object):
                 self.m_Pos_Export=()
 
                 self.m_GridPos={}
+                self.m_BlockList=[]
                 for pos in [(i,j) for i in range(iTotalRow) for j in range(iTotalCol)]:
                         self.m_GridPos[pos]=0
 
@@ -554,6 +556,7 @@ class CGrid(object):
                                 self.m_BlockList.append( pos )
                 else:
                         self.m_GridPos[pos]=idx
+
                 return 1
 
 
@@ -655,7 +658,6 @@ $size(%s,%s)
                                 else:
                                         iColor=0
                                 dPos[pos]=iColor
-                                #assert(self.SetGrid(pos,iColor)==1)
                 return iRow,iCol,dPos
 
 
@@ -688,7 +690,7 @@ class CPainterPath(QtGui.QWidget):
                 leftLayout=QtGui.QVBoxLayout()
                 rightLayout=QtGui.QVBoxLayout()
 
-                screen = QtGui.QDesktopWidget().screenGeometry() 
+                screen = QtGui.QDesktopWidget().screenGeometry()
                 self.m_WindowSize_Col=screen.width()
                 self.m_WindowSize_Row=screen.height()
                 self.PaintMap()
@@ -745,7 +747,7 @@ class CPainterPath(QtGui.QWidget):
                 self.move_all_timer.timeout.connect(self.Move_All_Next)
 
                 self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-                self.resize(screen.width(), screen.height()) 
+                self.resize(screen.width(), screen.height())
                 self.setFixedSize(screen.width(),screen.height())
 
 
@@ -771,6 +773,7 @@ class CPainterPath(QtGui.QWidget):
 
 
         def PaintTables(self):
+                print "PaintTables !!!!! "
                 self.mapWidget.setColumnCount(self.m_Row)
                 self.mapWidget.setRowCount(self.m_Col)
 
@@ -781,16 +784,19 @@ class CPainterPath(QtGui.QWidget):
                 for row in range(self.m_Row):
                         self.mapWidget.setRowHeight(row,iRowSize)
 
+                assert 2<1
+
                 for pos,idx in self.m_Pos.iteritems():
                         row,col=pos
                         sColor=Grid_Color_List[idx]
-                        assert(self.SetColor(row,col,sColor)==1)
+                        self.SetColor(row,col,sColor)
                         self.m_Color_Bak[pos]=sColor
                 for pos in self.m_BlockList:
                         row,col=pos
                         sColor=Color_Block
-                        assert(self.SetColor(row,col,sColor)==1)
+                        self.SetColor(row,col,sColor)
                         self.m_Color_Bak[pos]=sColor
+                print "self.m_BlockList ",self.m_BlockList
 
 
         def RegistMap(self):
@@ -814,6 +820,7 @@ class CPainterPath(QtGui.QWidget):
                 owidget=QtGui.QWidget()
                 owidget.setStyleSheet('QWidget {background-color:%s}'%sColor)
                 self.mapWidget.setCellWidget(row,col,owidget)
+                print "Paint Table Set Color ",row,col,sColor
                 return 1
 
 
@@ -912,14 +919,14 @@ class CPainterPath(QtGui.QWidget):
                 self.move_all_timer.stop()
                 if( self.Move_NextStep() ):
                         self.move_all_timer.start(100)
-      
+
                 self.update()
 
 
 if __name__ == "__main__":
         app = QtGui.QApplication(sys.argv)
 
-        window=CPainterPath(dInfo)
+        window=CPainterPath({})
         window.m_PathList=[ (1,1),(1,2),(1,3),(0,3),(0,2),(0,1) ]
 
         window.show()

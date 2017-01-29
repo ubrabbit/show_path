@@ -29,7 +29,7 @@ static void Heap_Adjust(Heap_Base* heap,int idx,int size){
 		lchild=idx*2;
 		rchild=idx*2+1;
 
-		//叶子节点不需要调整
+		//Ҷ�ӽڵ㲻��Ҫ����
 		if(idx>size/2)
 			break;
 

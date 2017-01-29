@@ -10,17 +10,17 @@
 static  AStar_Map *g_Map=NULL;
 
 /*F=G+H
-F  :  æœ€ç»ˆåˆ†æ•°
-G  :  ç”±å‡ºå‘ç‚¹åˆ°è¾¾å½“å‰æ ¼å­çš„åˆ†æ•°
-H  :  å½“å‰æ ¼å­åˆ°è¾¾ç›®çš„åœ°çš„é¢„ä¼°åˆ†æ•°
+F  :  ×îÖÕ·ÖÊý
+G  :  ÓÉ³ö·¢µãµ½´ïµ±Ç°¸ñ×ÓµÄ·ÖÊý
+H  :  µ±Ç°¸ñ×Óµ½´ïÄ¿µÄµØµÄÔ¤¹À·ÖÊý
 */
 static int     g_Score_G[MAP_MAX_ROW][MAP_MAX_COL];
-static int     g_Score_H[MAP_MAX_ROW][MAP_MAX_COL]; 
+static int     g_Score_H[MAP_MAX_ROW][MAP_MAX_COL];
 
 static int     g_MapUnit_Set_Idx;
 static int     g_MapUnit_Set[MAP_MAX_ROW][MAP_MAX_COL];
 
-static int     g_Close_List[MAP_MAX_ROW][MAP_MAX_COL]; 
+static int     g_Close_List[MAP_MAX_ROW][MAP_MAX_COL];
 
 
 static int Cmp_Pos_Unit(Heap_Unit *node1,Heap_Unit *node2){
@@ -74,7 +74,7 @@ static void MakeMap(Path_Map *map){
         }
 
         g_Map->openlist=CreateHeap( size, Cmp_Pos_Unit );
-}       
+}
 
 
 static Map_Pos* Map_Index_Unit(MAP_POS_T row ,MAP_POS_T col){
@@ -117,15 +117,14 @@ static void SearchAroundUnits(MAP_POS_T row, MAP_POS_T col){
         Map_Pos *unit;
         int cur_score=g_Score_G[row][col];
         int value_g,value_h;
+        int block[3][3];
 
         Map_Pos *unit_parent;
 
-        
         exit_x=g_Map->exit_x;
         exit_y=g_Map->exit_y;
         unit_parent=Map_Index_Unit( row,col );
 
-        int block[3][3];
         memset(block,0,sizeof(int)*3*3);
         for(i=-1;i<2;i=i+2){
                 cur_row=row+i;
@@ -155,7 +154,7 @@ static void SearchAroundUnits(MAP_POS_T row, MAP_POS_T col){
 
                         if( i==0 && j==0 )
                                 continue;
-                        //å¯¹åº”çš„blockæ•°ç»„ä¸­çš„ä½ç½®
+                        //¶ÔÓ¦µÄblockÊý×éÖÐµÄÎ»ÖÃ
                         if( block[i+1][j+1]>=1 )
                                 continue;
 
@@ -168,11 +167,11 @@ static void SearchAroundUnits(MAP_POS_T row, MAP_POS_T col){
 
                         unit=Map_Index_Unit( cur_row,cur_col );
                         unit->parent=unit_parent;
-                        //ç›´è§’çº¿
+                        //Ö±½ÇÏß
                         if( cur_row == row || cur_col == col ){
                                 value_g=PATH_COST_1 + unit->weight ;
                         }
-                        //æ–œçº¿
+                        //Ð±Ïß
                         else{
                                 value_g=PATH_COST_2 + unit->weight ;
                         }
@@ -193,6 +192,12 @@ static void SearchAroundUnits(MAP_POS_T row, MAP_POS_T col){
 
 
 MAP_POS_T Start_AStar(Path_Map *map, MAP_POS_T **result){
+        Map_Pos *unit,*enter_unit,*exit_unit;
+        MAP_POS_T enter_x,enter_y,exit_x,exit_y;
+        MAP_POS_T cur_row,cur_col;
+        MAP_POS_T total=0;
+        int idx;
+
         if ( NULL== g_Map ){
                 MakeMap(map);
         }
@@ -202,11 +207,6 @@ MAP_POS_T Start_AStar(Path_Map *map, MAP_POS_T **result){
         memset(g_Close_List,0,sizeof(int) * MAP_MAX_SIZE );
         g_MapUnit_Set_Idx=0;
         memset(g_MapUnit_Set,0,sizeof(int) * MAP_MAX_SIZE );
-
-        Map_Pos *unit,*enter_unit,*exit_unit;
-        MAP_POS_T enter_x,enter_y,exit_x,exit_y;
-        MAP_POS_T cur_row,cur_col;
-        MAP_POS_T total=0;
 
         enter_x=map->enter_x;
         enter_y=map->enter_y;
@@ -242,7 +242,7 @@ MAP_POS_T Start_AStar(Path_Map *map, MAP_POS_T **result){
 
         total=0;
         unit=exit_unit;
-        int idx=0;
+        idx=0;
         //fprintf(stdout, "enter is (%ld %ld)  (%ld %ld)\n",enter_x,enter_y,exit_x,exit_y );
         while(unit){
                 cur_row=unit->row;

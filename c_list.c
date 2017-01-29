@@ -62,7 +62,7 @@ void* ListIndexNode(Link_List* list, long idx){
         List_Node* node;
 
         if( idx <0 ) return NULL;
-        
+
         i=0;
         node=list->head;
         while( i < idx && NULL != node ){
@@ -129,10 +129,10 @@ int ListDelNode(Link_List* list, void *ptr){
 
 
 void* ListPopNode(Link_List* list){
-        if( NULL == list->head )         return NULL;
-
         List_Node* tmp;
         void *ptr;
+
+        if( NULL == list->head )         return NULL;
 
         tmp=list->head;
         ListDelNode_Step2(list,tmp);

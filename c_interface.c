@@ -19,6 +19,7 @@ static Path_Container *g_Rlt_Container;
 static MAP_POS_T Test_Algorithm(MAP_POS_T **result){
         MAP_POS_T total;
         MAP_POS_T row_size,col_size,row,col;
+        MAP_POS_T k,idx;
 
         row_size=g_Map->row_size;
         col_size=g_Map->col_size;
@@ -31,10 +32,9 @@ static MAP_POS_T Test_Algorithm(MAP_POS_T **result){
         enter_x=g_Map->enter_x;
         enter_y=g_Map->enter_y;
         exit_x=g_Map->exit_x;
-        exit_y=g_Map->exit_y;  
+        exit_y=g_Map->exit_y;
         */
 
-        MAP_POS_T k,idx;
         total=k=idx=0;
         for(row=0;row<row_size;row++)
                 for(col=0;col<col_size;col++){
@@ -56,7 +56,7 @@ static MAP_POS_T Start_Algorithm(MAP_POS_T **result){
         MAP_POS_T total;
 
         total=0;
-        //鍦ㄦ鍔犲叆绠楁硶
+        //在此加入算法
         switch(CUR_PATH_MODE){
                 case PATH_MODE_ASTAR:
                         total=Start_AStar(g_Map,result);
@@ -97,13 +97,16 @@ static PyObject* Reset_Path(PyObject *self,PyObject *args){
 
 
 static PyObject* Regist_Map(PyObject *self,PyObject *args){
-        assert(NULL==g_Map);
-        
+
         MAP_POS_T row,col;
         MAP_POS_T enter_x, enter_y, exit_x, exit_y;
-        long len;
-
+        Py_ssize_t len,i;
         PyObject *oEnter,*oExit,*posList,*blockList;
+        MAP_POS_T pos_row,pos_col,color;
+        PyObject* temp;
+
+        assert(NULL==g_Map);
+
         PyArg_ParseTuple(args,"llOOOO",&row,&col,&oEnter,&oExit,&posList,&blockList);
 
         enter_x=PyInt_AsLong(PyTuple_GetItem(oEnter,0));
@@ -121,9 +124,6 @@ static PyObject* Regist_Map(PyObject *self,PyObject *args){
 
         g_Map=CreateMap(row,col,enter_x,enter_y,exit_x,exit_y);
 
-        long i;
-        MAP_POS_T pos_row,pos_col,color;
-        PyObject* temp;
         len=PyList_Size(posList);
         for(i=0;i<len;i++){
                 temp=PyList_GetItem(posList,i);
@@ -156,6 +156,7 @@ static PyObject* Path_Start(PyObject *self,PyObject *args){
         MAP_POS_T *result;
         clock_t start, finish;
         long cost;
+        PyObject* tuple_return,*tuple_param;
 
         if(g_Rlt_Container){
                 Free_Path_Container(g_Rlt_Container);
@@ -166,7 +167,7 @@ static PyObject* Path_Start(PyObject *self,PyObject *args){
                 Py_RETURN_NONE;
         }
 
-        //size澶у皬涓烘�绘牸瀛愭暟*2 + 瀹瑰樊鍋忕Щ
+        //size大小为总格子数*2 + 容差偏移
         size=sizeof(MAP_POS_T)*g_Map->row_size*g_Map->col_size*2 + 4*sizeof( MAP_POS_T );
         result=(MAP_POS_T *)malloc( size );
         memset(result,-1,size);
@@ -177,8 +178,8 @@ static PyObject* Path_Start(PyObject *self,PyObject *args){
         finish=clock()*1000000 / CLOCKS_PER_SEC;
         cost=(long)(finish-start)/1000;
 
-        PyObject* tuple_return = PyTuple_New(2);
-        PyObject* tuple_param = PyTuple_New(total_unit*2);
+        tuple_return = PyTuple_New(2);
+        tuple_param = PyTuple_New(total_unit*2);
 
         g_Rlt_Container=Create_Container();
         i=0;

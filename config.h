@@ -6,6 +6,6 @@
  */
 
 
-#define PYTHON_PATH "python2.7/Python.h"
+#define PYTHON_PATH <Python.h>
 
 #include PYTHON_PATH

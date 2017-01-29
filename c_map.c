@@ -10,6 +10,7 @@
 
 Path_Map* CreateMap(MAP_POS_T row, MAP_POS_T col, MAP_POS_T enter_x, MAP_POS_T enter_y, MAP_POS_T exit_x, MAP_POS_T exit_y){
         Path_Map *map;
+        MAP_POS_T i,j;
 
         assert(row*col <= MAP_MAX_SIZE);
 
@@ -24,7 +25,6 @@ Path_Map* CreateMap(MAP_POS_T row, MAP_POS_T col, MAP_POS_T enter_x, MAP_POS_T e
 
         map->path_map=(MAP_POS_T*)malloc( sizeof(MAP_POS_T) * row * col );
 
-        MAP_POS_T i,j;
         for (i=0; i<row; i++)
                 for( j=0; j<col; j++){
                         SetMap_Value(map,i,j,0);
@@ -72,10 +72,11 @@ void SetMap_Value(Path_Map *map, MAP_POS_T row, MAP_POS_T col, MAP_POS_T value){
 
 
 int Get_Map_Pos_Type(Path_Map *map,MAP_POS_T row, MAP_POS_T col){
+        MAP_POS_T value;
+
         if ( row<0 || col<0 )   return BLOCK_T_BORDER;
         if ( row>=map->row_size || col>=map->col_size ) return BLOCK_T_BORDER;
 
-        MAP_POS_T value;
         value=GetMap_Value(map,row,col);
         if( value==BLOCK_VALUE )        return BLOCK_T_BLOCK;
 

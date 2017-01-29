@@ -16,8 +16,8 @@ sys.path.append('path_ui')
 from PyQt4 import QtCore, QtGui
 
 import path_interface
-
 import c_path
+
 
 def start():
 	c_path.Init_Path()
