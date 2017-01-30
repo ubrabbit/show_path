@@ -784,8 +784,6 @@ class CPainterPath(QtGui.QWidget):
                 for row in range(self.m_Row):
                         self.mapWidget.setRowHeight(row,iRowSize)
 
-                assert 2<1
-
                 for pos,idx in self.m_Pos.iteritems():
                         row,col=pos
                         sColor=Grid_Color_List[idx]
