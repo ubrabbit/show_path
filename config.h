@@ -5,7 +5,10 @@
  *
  */
 
-
-#define PYTHON_PATH <Python.h>
+#ifdef _WIN32
+        #define PYTHON_PATH <Python.h>
+#else
+        #define PYTHON_PATH "python2.7/Python.h"
+#endif
 
 #include PYTHON_PATH
