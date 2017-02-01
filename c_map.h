@@ -29,7 +29,6 @@ typedef struct Map_Unit{
         MAP_POS_T row;
         MAP_POS_T col;
 
-        MAP_POS_T key_idx;
 }Map_Unit;
 
 

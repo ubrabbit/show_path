@@ -8,6 +8,8 @@
  *
  */
 
+SET VS90COMNTOOLS=%VS110COMNTOOLS%
+python exe_setup.py
  """
 
 from distutils.core import setup

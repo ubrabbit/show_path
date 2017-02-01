@@ -21,22 +21,27 @@ static int     g_MapUnit_Set_Idx;
 static int     g_MapUnit_Set[MAP_MAX_ROW][MAP_MAX_COL];
 
 static int     g_Close_List[MAP_MAX_ROW][MAP_MAX_COL];
+static long g_TotalSearchGrid=0;
 
 
 static int Cmp_Pos_Unit(Heap_Unit *node1,Heap_Unit *node2){
         Map_Pos *unit_1,*unit_2;
         MAP_POS_T x1,y1,x2,y2;
+        MAP_POS_T unit_score_1,unit_score_2;
 
         unit_1=(Map_Pos *)node1->data_ptr;
         unit_2=(Map_Pos *)node2->data_ptr;
-
-        if( unit_1->score_f > unit_2->score_f ) return CMP_BIGGER;
-        if( unit_1->score_f < unit_2->score_f ) return CMP_SMALLER;
 
         x1=unit_1->row;
         y1=unit_1->col;
         x2=unit_2->row;
         y2=unit_2->col;
+
+        unit_score_1 = unit_1->score_f + unit_1->score_temp_f;
+        unit_score_2 = unit_2->score_f + unit_2->score_temp_f;
+
+        if( unit_score_1 > unit_score_2 ) return CMP_BIGGER;
+        if( unit_score_1 < unit_score_2 ) return CMP_SMALLER;
 
         if( g_MapUnit_Set[x1][y1] <=g_MapUnit_Set[x2][y2] ) return CMP_SMALLER;
 
@@ -67,6 +72,7 @@ static void MakeMap(Path_Map *map){
                         unit->row=i;
                         unit->col=j;
                         unit->score_f=0;
+                        unit->score_temp_f=0;
                         unit->weight=GetMap_Value(map,i,j);
                         unit->parent=NULL;
                         g_Map->poslist[ i*map->col_size+j ]=unit;
@@ -107,6 +113,35 @@ static void ReleaseMap(void){
         free(g_Map->poslist);
         free(g_Map);
         g_Map=NULL;
+
+        memset(g_Score_G,0,sizeof(int) * MAP_MAX_SIZE );
+        memset(g_Score_H,0,sizeof(int) * MAP_MAX_SIZE );
+        memset(g_Close_List,0,sizeof(int) * MAP_MAX_SIZE );
+        g_MapUnit_Set_Idx=0;
+        memset(g_MapUnit_Set,0,sizeof(int) * MAP_MAX_SIZE );
+
+        g_TotalSearchGrid=0;
+
+}
+
+
+static int IsRevertDirect(MAP_POS_T row, MAP_POS_T col, MAP_POS_T next_row, MAP_POS_T next_col){
+    MAP_POS_T exit_x,exit_y;
+
+    exit_x=g_Map->exit_x;
+    exit_y=g_Map->exit_y;
+
+    if( abs(row-exit_x)+abs(col-exit_y) < abs(next_row-exit_x) + abs(next_col-exit_y) )
+        return 1;
+
+    return 0;
+}
+
+
+static int IsPosNextTo(MAP_POS_T row, MAP_POS_T col, MAP_POS_T next_row, MAP_POS_T next_col){
+        if( abs(row-next_row)+abs(col-next_col) <=1 )   return 1;
+        if ( abs(row-next_row)==1 && abs(col-next_col)==1 )    return 1;
+        return 0;
 }
 
 
@@ -154,6 +189,9 @@ static void SearchAroundUnits(MAP_POS_T row, MAP_POS_T col){
 
                         if( i==0 && j==0 )
                                 continue;
+
+                        g_TotalSearchGrid++;
+
                         //对应的block数组中的位置
                         if( block[i+1][j+1]>=1 )
                                 continue;
@@ -169,16 +207,24 @@ static void SearchAroundUnits(MAP_POS_T row, MAP_POS_T col){
                         unit->parent=unit_parent;
                         //直角线
                         if( cur_row == row || cur_col == col ){
-                                value_g=PATH_COST_1 + unit->weight ;
+                                value_g=PATH_COST_1 + unit->weight;
                         }
                         //斜线
                         else{
-                                value_g=PATH_COST_2 + unit->weight ;
+                                value_g=PATH_COST_2 + unit->weight;
                         }
                         value_g+=cur_score;
-                        value_h=( abs( cur_row - exit_x ) + abs( cur_col - exit_y ) ) * PATH_COST_1 * 10;
+                        value_h=( abs( cur_row - exit_x ) + abs( cur_col - exit_y ) ) * PATH_COST_1 * 2;
 
-                        unit->score_f=value_g+value_h;
+                        unit->score_f = value_g+value_h;
+
+                        unit->score_temp_f = unit_parent->score_temp_f;
+                        //若路径往相反方向，权重应该变大
+                        /*
+                        if ( IsRevertDirect( unit_parent->row,unit_parent->col, cur_row,cur_col ) ){
+                                        unit->score_temp_f += PATH_COST_1;
+                                }
+                        */
 
                         g_Score_G[cur_row][cur_col]=value_g;
                         g_Score_H[cur_row][cur_col]=value_h;
@@ -186,6 +232,7 @@ static void SearchAroundUnits(MAP_POS_T row, MAP_POS_T col){
 
                         g_MapUnit_Set[cur_row][cur_col]=g_MapUnit_Set_Idx++;
                         //fprintf(stdout, "Heap_Insert %ld  %ld \n",cur_row,cur_col);
+
                         Heap_Insert(g_Map->openlist,(void*)unit);
                 }
 }
@@ -195,7 +242,7 @@ MAP_POS_T Start_AStar(Path_Map *map, MAP_POS_T **result){
         Map_Pos *unit,*enter_unit,*exit_unit;
         MAP_POS_T enter_x,enter_y,exit_x,exit_y;
         MAP_POS_T cur_row,cur_col;
-        MAP_POS_T total=0;
+        MAP_POS_T total;
         int idx;
 
         if ( NULL== g_Map ){
@@ -207,6 +254,8 @@ MAP_POS_T Start_AStar(Path_Map *map, MAP_POS_T **result){
         memset(g_Close_List,0,sizeof(int) * MAP_MAX_SIZE );
         g_MapUnit_Set_Idx=0;
         memset(g_MapUnit_Set,0,sizeof(int) * MAP_MAX_SIZE );
+
+        g_TotalSearchGrid=0;
 
         enter_x=map->enter_x;
         enter_y=map->enter_y;
@@ -238,12 +287,14 @@ MAP_POS_T Start_AStar(Path_Map *map, MAP_POS_T **result){
                 SearchAroundUnits(cur_row, cur_col);
 
                 unit=(Map_Pos*)Heap_GetTop(g_Map->openlist);
+
         }
+
 
         total=0;
         unit=exit_unit;
         idx=0;
-        //fprintf(stdout, "enter is (%ld %ld)  (%ld %ld)\n",enter_x,enter_y,exit_x,exit_y );
+        fprintf(stdout, "finsh search final_score = %ld search_grid = %ld \n",g_Score_G[exit_x][exit_y],g_TotalSearchGrid );
         while(unit){
                 cur_row=unit->row;
                 cur_col=unit->col;

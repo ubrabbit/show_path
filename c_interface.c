@@ -155,6 +155,7 @@ static PyObject* Path_Start(PyObject *self,PyObject *args){
         MAP_POS_T i,row,col,total_unit,size;
         MAP_POS_T *result;
         clock_t start, finish;
+
         long cost;
         PyObject* tuple_return,*tuple_param;
 
@@ -172,11 +173,11 @@ static PyObject* Path_Start(PyObject *self,PyObject *args){
         result=(MAP_POS_T *)malloc( size );
         memset(result,-1,size);
 
-        start=clock()*1000000 / CLOCKS_PER_SEC;;
+        start=clock();
         total_unit=0;
         total_unit=Start_Algorithm(&result);
-        finish=clock()*1000000 / CLOCKS_PER_SEC;
-        cost=(long)(finish-start)/1000;
+        finish=clock();
+        cost=(long)( finish - start );
 
         tuple_return = PyTuple_New(2);
         tuple_param = PyTuple_New(total_unit*2);
@@ -195,6 +196,7 @@ static PyObject* Path_Start(PyObject *self,PyObject *args){
         g_Rlt_Container->cost=cost;
         PyTuple_SetItem(tuple_return,1,tuple_param);
 
+        fprintf(stdout, "cost : finsh %ld - start %ld == %ld ms\n",finish,start,cost);
         free(result);
         return tuple_return;
 }

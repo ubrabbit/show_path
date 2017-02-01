@@ -49,6 +49,8 @@ Color_Block="#000000"
 
 Special_Colors=[Color_Enter,Color_Exit,Color_Block]
 
+Size_Select_List=[10,20,50,80,100,200,]
+
 
 DEFINE_REDIRECT_STDOUT = 1
 
@@ -81,13 +83,43 @@ class CMyApp(QtGui.QMainWindow):
                 if not fileName:
                         return
 
+                self.m_Interface.label_File.setText(fileName)
+
+                self.progressDialog=QtGui.QProgressDialog(self)
+                self.progressDialog.setWindowModality(QtCore.Qt.WindowModal)
+                                        #设置进度对话框出现等待时间，此处设定为 5 秒，默认为 4 秒
+                self.progressDialog.setMinimumDuration(5)
+                self.progressDialog.setWindowTitle(self.tr("请等待"))
+                self.progressDialog.setLabelText(self.tr("读取..."))
+                self.progressDialog.setCancelButtonText(self.tr("取消"))
+                self.progressDialog.setRange(0,10)
+
                 with open(fileName,"r") as fobj:
                         sCode=fobj.read()
                         iRow,iCol,dPos=self.m_Grid.LoadTxt(sCode)
+
+                        self.m_Interface.tableWidget.clear()
                         self.m_Interface.ResetTableGridSize(iRow,iCol)
-                        for pos,iColor in dPos.iteritems():
-                                row,col=pos
-                                self.m_Interface.SetTableColor(row,col,iColor)
+
+                        posList=dPos.keys()
+                        ilen=len(dPos)
+                        for i in range(10+1):
+                                self.progressDialog.setValue(i)
+                                if self.progressDialog.wasCanceled():
+                                        self.m_Interface.tableWidget.clear()
+                                        return
+
+                                j=ilen/10
+                                while(posList and j>=0):
+                                        j-=1
+                                        pos=posList.pop(0)
+                                        iColor=dPos[pos]
+                                        row,col=pos
+                                        if not iColor:
+                                                continue
+                                        self.m_Interface.SetTableColor(row,col,iColor)
+                self.m_Interface.showGraphStack.setCurrentIndex(1)
+                #QtGui.QMessageBox.information(self,"成功",self.tr("导入文件%s成功！"%fileName))
 
 
         def ExportToTxtFile(self):
@@ -121,7 +153,6 @@ class CMyApp(QtGui.QMainWindow):
                 c_path.Reset_Path()
 
                 dInfo=self.m_Grid.GetPainterInfo()
-                print "StartPainting ",dInfo
                 self.m_CurWindow=CPainterPath(dInfo)
                 self.m_CurWindow.show()
 
@@ -228,6 +259,7 @@ class CInterface(object):
                 if DEFINE_REDIRECT_STDOUT:
                         self.tab_Widget.addTab(self.console_Edit,self.m_Parent.tr("控制台"))
                         self.tab_Widget.addTab(self.log_Edit,self.m_Parent.tr("日志"))
+                self.tab_Widget.addTab(self.log_Edit,self.m_Parent.tr("日志"))
 
                 layout_Vertical_Top=QtGui.QHBoxLayout()
                 layout_Vertical_Bottom=QtGui.QHBoxLayout()
@@ -255,8 +287,10 @@ class CInterface(object):
                 combo1=QtGui.QComboBox(self.m_Parent)
                 combo2=QtGui.QComboBox(self.m_Parent)
 
-                sizeList=(20,50,100,200,400,500,1000,)
+                sizeList=Size_Select_List
                 self.m_RowCnt=self.m_ColCnt=sizeList[0]
+                self.m_Combo_Row=combo1
+                self.m_Combo_Col=combo2
                 for obj in (combo1,combo2):
                         obj.setCurrentIndex(0)
                         for value in sizeList:
@@ -353,11 +387,16 @@ class CInterface(object):
                 layout_right.setStretchFactor(oButton4,1)
                 layout_right.addStretch(8)
 
+                self.label_File=QtGui.QLabel(self.m_Parent.tr(""))
+                layout_Vertical_Bottom.addWidget(self.label_File)
+                layout_Vertical_Bottom.setStretchFactor(self.label_File,9)
+                layout_Vertical_Bottom.addStretch(8)
+
                 graphLayout.addLayout(layout_Vertical_Top)
                 graphLayout.addLayout(layout_Vertical_Bottom)
                 graphLayout.setStretchFactor(layout_Vertical_Top,9)
                 graphLayout.setStretchFactor(layout_Vertical_Bottom,1)
-                graphLayout.addStretch(1)
+
 
         def ResetTableGridSize(self,iTotalRow,iTotalCol):
                 self.m_RowCnt=iTotalRow
@@ -365,6 +404,9 @@ class CInterface(object):
 
                 self.tableWidget.setColumnCount(iTotalCol)
                 self.tableWidget.setRowCount(iTotalRow)
+
+                self.m_Combo_Row.setCurrentIndex(Size_Select_List.index(iTotalRow))
+                self.m_Combo_Col.setCurrentIndex(Size_Select_List.index(iTotalCol))
 
                 iRowSize=iColSize=20
                 for col in range(iTotalCol):
@@ -384,13 +426,13 @@ class CInterface(object):
 
 
         def SetTableColor(self,row,column,idx):
-                print "SetTableColor ",row,column,idx
+                #print "SetTableColor ",row,column,idx
                 if not self.m_Parent.m_Grid.SetGrid((row,column),idx):
                         QtGui.QMessageBox.information(self.m_Parent,"",self.m_Parent.tr("设置颜色失败"))
                         return 0
 
                 sColor=self.m_ColorRatios[idx]
-                print "选择了颜色： %s "%str(sColor)
+                #print "选择了颜色： %s "%str(sColor)
                 owidget=QtGui.QWidget()
                 owidget.setStyleSheet('QWidget {background-color:%s}'%sColor)
                 self.tableWidget.setCellWidget(row,column,owidget)
@@ -429,7 +471,12 @@ class CInterface(object):
                         self.curColorLabel.setStyleSheet('QWidget {background-color:%s}'%sColor)
                 elif sFlag=="Set_Color":
                         #oItems=self.tableWidget.selectedItems()
-                        for oIndex in self.tableWidget.selectedIndexes():
+                        oList=self.tableWidget.selectedIndexes()
+                        if len(oList)>=400:
+                                sCode="一次性批量上色最多只能选择20*20 个"
+                                QtGui.QMessageBox.information(self.m_Parent,"",self.m_Parent.tr(sCode))
+                                return
+                        for oIndex in oList:
                                     row,column=oIndex.row(),oIndex.column()
                                     if not self.SetTableColor(row,column,self.m_CurSelectColor):
                                                 break
@@ -573,7 +620,12 @@ class CGrid(object):
         def GetPainterInfo(self):
                 dInfo={}
                 dWeight={}
+                dGrid={}
                 for pos,idx in self.m_GridPos.iteritems():
+                        if not idx:
+                                continue
+                        dGrid[pos]=idx
+                for pos,idx in dGrid.iteritems():
                         weight=self.m_Parent.m_Interface.m_ColorInputs[idx]
                         dWeight[pos]=weight
 
@@ -582,7 +634,7 @@ class CGrid(object):
                 dInfo["Enter"]=self.m_Pos_Entrance
                 dInfo["Exit"]=self.m_Pos_Export
                 dInfo["Block"]=self.m_BlockList
-                dInfo["Grid"]=copy.copy(self.m_GridPos)
+                dInfo["Grid"]=dGrid
                 dInfo["Weight"]=dWeight
                 dInfo["EnterColor"]=self.m_Parent.m_Interface.m_EntranceColor
                 dInfo["ExitColor"]=self.m_Parent.m_Interface.m_ExitColor
@@ -610,7 +662,7 @@ $size(%s,%s)
                                 elif pos in self.m_BlockList:
                                         sKey=self.m_BlockFlag
                                 else:
-                                        iColor=self.m_GridPos[pos]
+                                        iColor=self.m_GridPos.get(pos,0)
                                         sKey="%s"%iColor
                                 sList.append(sKey)
                         sContent.append( " ".join(sList) )
@@ -678,7 +730,7 @@ class CPainterPath(QtGui.QWidget):
 
                 #剩余路径列表
                 self.m_PathList=[]
-                self.m_PassList_Bak=[]
+                self.m_PathList_Bak=[]
                 #已经经过的路径列表，初始为出口
                 self.m_PassList=[]
 
@@ -746,9 +798,11 @@ class CPainterPath(QtGui.QWidget):
                 #设置窗口计时器
                 self.move_all_timer.timeout.connect(self.Move_All_Next)
 
+                iWidth,iHeight=screen.width(), screen.height()
                 self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-                self.resize(screen.width(), screen.height())
-                self.setFixedSize(screen.width(),screen.height())
+                self.resize(iWidth,iHeight)
+                self.setFixedSize(iWidth,iHeight)
+                self.move(0,0)
 
 
         def OnButtonClicked(self,sFlag):
@@ -773,7 +827,16 @@ class CPainterPath(QtGui.QWidget):
 
 
         def PaintTables(self):
-                print "PaintTables !!!!! "
+                #print "PaintTables !!!!! "
+                self.progressDialog=QtGui.QProgressDialog(self)
+                self.progressDialog.setWindowModality(QtCore.Qt.WindowModal)
+                #设置进度对话框出现等待时间，此处设定为 5 秒，默认为 4 秒
+                self.progressDialog.setMinimumDuration(5)
+                self.progressDialog.setWindowTitle(self.tr("请等待"))
+                self.progressDialog.setLabelText(self.tr("读取..."))
+                self.progressDialog.setCancelButtonText(self.tr("取消"))
+                self.progressDialog.setRange(0,10)
+
                 self.mapWidget.setColumnCount(self.m_Row)
                 self.mapWidget.setRowCount(self.m_Col)
 
@@ -784,17 +847,37 @@ class CPainterPath(QtGui.QWidget):
                 for row in range(self.m_Row):
                         self.mapWidget.setRowHeight(row,iRowSize)
 
-                for pos,idx in self.m_Pos.iteritems():
-                        row,col=pos
-                        sColor=Grid_Color_List[idx]
-                        self.SetColor(row,col,sColor)
-                        self.m_Color_Bak[pos]=sColor
-                for pos in self.m_BlockList:
-                        row,col=pos
-                        sColor=Color_Block
-                        self.SetColor(row,col,sColor)
-                        self.m_Color_Bak[pos]=sColor
-                print "self.m_BlockList ",self.m_BlockList
+                posList=self.m_Pos.keys()
+                blockList=self.m_BlockList[:]
+
+                ilen1=len(posList)
+                ilen2=len(blockList)
+                for i in range(10+1):
+                        self.progressDialog.setValue(i)
+                        if self.progressDialog.wasCanceled():
+                                self.mapWidget.clear()
+                                return
+
+                        j=ilen1/10
+                        while(posList and j>=0):
+                                j-=1
+                                pos=posList.pop(0)
+                                iColor=self.m_Pos[pos]
+                                row,col=pos
+                                if not iColor:
+                                        continue
+                                sColor=Grid_Color_List[iColor]
+                                self.SetColor(row,col,sColor)
+                                self.m_Color_Bak[pos]=sColor
+                        j=ilen2/10
+                        while(blockList and j>=0):
+                                j-=1
+                                pos=blockList.pop(0)
+                                row,col=pos
+                                sColor=Color_Block
+                                self.SetColor(row,col,sColor)
+                                self.m_Color_Bak[pos]=sColor
+                #print "self.m_BlockList ",self.m_BlockList
 
 
         def RegistMap(self):
@@ -803,10 +886,11 @@ class CPainterPath(QtGui.QWidget):
                 for pos,weight in self.m_Weight.iteritems():
                         i,j=pos
                         posList.append( (i,j,weight) )
-                print self.m_Col,self.m_Row,self.m_Entrance,self.m_Exit,posList
+                #print self.m_Col,self.m_Row,self.m_Entrance,self.m_Exit,posList
 
                 try:
-                        iret=c_path.Regist_Map(self.m_Col,self.m_Row,self.m_Entrance,self.m_Exit,posList,self.m_BlockList)
+                        self.m_PosList=posList
+                        iret=c_path.Regist_Map(self.m_Row,self.m_Col,self.m_Entrance,self.m_Exit,posList,self.m_BlockList)
                         assert(iret==1)
                 except Exception,e:
                         import traceback
@@ -818,7 +902,7 @@ class CPainterPath(QtGui.QWidget):
                 owidget=QtGui.QWidget()
                 owidget.setStyleSheet('QWidget {background-color:%s}'%sColor)
                 self.mapWidget.setCellWidget(row,col,owidget)
-                print "Paint Table Set Color ",row,col,sColor
+                #print "Paint Table Set Color ",row,col,sColor
                 return 1
 
 
@@ -867,7 +951,11 @@ class CPainterPath(QtGui.QWidget):
                 self.m_Button_Paint_Restart.setEnabled(False)
                 self.move_all_timer.stop()
 
-                self.m_PassList=self.m_PassList_Bak[:]
+                while(self.m_PathList):
+                        row,col=self.m_PassList.pop(-1)
+                        self.mapWidget.removeCellWidget(row,col)
+
+                self.m_PathList=self.m_PathList_Bak[:]
                 del self.m_Start
                 self.PaintTables()
 

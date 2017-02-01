@@ -26,6 +26,7 @@ struct Map_Pos{
         MAP_POS_T       row;
         MAP_POS_T       col;
         MAP_POS_T       score_f;
+        MAP_POS_T       score_temp_f;
         MAP_POS_T       weight;
         Map_Pos        *parent;
 };
@@ -40,7 +41,7 @@ typedef struct AStar_Map{
         MAP_POS_T exit_x;
         MAP_POS_T exit_y;
 
-        Map_Pos ** poslist;
+        Map_Pos **poslist;
         Heap_Base        *openlist;
 
         Path_Map        *map;
