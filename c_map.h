@@ -45,6 +45,13 @@ typedef struct Path_Map{
 }Path_Map;
 
 
+typedef struct Path_Record{
+        MAP_POS_T idx;
+        MAP_POS_T unit_cnt;
+        MAP_POS_T pos_record[MAP_MAX_SIZE*2];
+}Path_Record;
+
+
 Path_Map* CreateMap(MAP_POS_T row,MAP_POS_T col,MAP_POS_T enter_x,MAP_POS_T enter_y,MAP_POS_T exit_x,MAP_POS_T exit_y);
 
 void FreeMap(Path_Map *map);

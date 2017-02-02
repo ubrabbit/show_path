@@ -202,11 +202,42 @@ static PyObject* Path_Start(PyObject *self,PyObject *args){
 }
 
 
+static PyObject* GetRecordPos_AStar(PyObject *self,PyObject *args){
+        PyObject* tuple_return,*tuple_param;
+        MAP_POS_T i,j,num,row,col;
+        Path_Record* path_record;
+
+        extern Path_Record* GetRecordPos(void);
+        path_record=GetRecordPos();
+
+        if( path_record->unit_cnt <=0 )       Py_RETURN_NONE;
+
+        tuple_return = PyTuple_New(path_record->unit_cnt);
+
+        j=0;
+        for(i=0; i<path_record->idx; i=i+3){
+                num=path_record->pos_record[i];
+                row=path_record->pos_record[i+1];
+                col=path_record->pos_record[i+2];
+
+                tuple_param = PyTuple_New(3);
+                PyTuple_SetItem(tuple_param,0,Py_BuildValue("i",num));
+                PyTuple_SetItem(tuple_param,1,Py_BuildValue("i",row));
+                PyTuple_SetItem(tuple_param,2,Py_BuildValue("i",col));
+
+                PyTuple_SetItem(tuple_return,j++,tuple_param);
+        }
+
+        return tuple_return;
+}
+
+
 static PyMethodDef PathMethods[] = {
         {"Init_Path",Init_Path, METH_VARARGS, "Init_Path"},
         {"Reset_Path",Reset_Path, METH_VARARGS, "Reset_Path"},
         {"Regist_Map", Regist_Map, METH_VARARGS, "Regist_Map"},
         {"Path_Start", Path_Start, METH_VARARGS, "Path_Start"},
+        {"GetRecordPos_AStar", GetRecordPos_AStar, METH_VARARGS, "GetRecordPos_AStar"},
         {NULL,NULL,0,NULL},
 };
 

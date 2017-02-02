@@ -8,5 +8,5 @@ ${Block} ${Block} ${Block} ${Block} ${Block} ${Block} ${Block} ${Block} ${Block}
 0 0 0 0 0 0 0 0 0 0
 ${Block} ${Block} ${Block} ${Block} ${Block} ${Block} ${Block} ${Block} ${Block} 0
 0 0 0 0 0 0 0 0 0 0
-${Block} 1 9 ${Block} ${Block} ${Block} ${Block} ${Block} ${Block} ${Block}
+${Block} 1 8 8 8 8 ${Block} ${Block} ${Block} ${Block}
 0 0 0 0 0 0 0 0 0 ${Exit}

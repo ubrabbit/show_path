@@ -20,6 +20,9 @@
 #define PATH_COST_1 10
 #define PATH_COST_2 14
 
+#define PATH_FUNC_H_COST(x1,x2,y1,y2) ( ( abs( x1 - x2 ) + abs( y1 - y2 ) ) * PATH_COST_1 / 5 )
+
+
 typedef struct Map_Pos Map_Pos;
 struct Map_Pos{
 

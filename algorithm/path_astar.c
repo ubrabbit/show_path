@@ -13,6 +13,11 @@ static  AStar_Map *g_Map=NULL;
 F  :  最终分数
 G  :  由出发点到达当前格子的分数
 H  :  当前格子到达目的地的预估分数
+
+H如果过大，会演变成深度优先算法BFS
+H如果过小，会导致搜索的格子变大
+G如果过大，则演变成Dijkstra算法
+需要合理分配权重
 */
 static int     g_Score_G[MAP_MAX_ROW][MAP_MAX_COL];
 static int     g_Score_H[MAP_MAX_ROW][MAP_MAX_COL];
@@ -22,6 +27,9 @@ static int     g_MapUnit_Set[MAP_MAX_ROW][MAP_MAX_COL];
 
 static int     g_Close_List[MAP_MAX_ROW][MAP_MAX_COL];
 static long g_TotalSearchGrid=0;
+
+
+static Path_Record *g_Path_Record=NULL;
 
 
 static int Cmp_Pos_Unit(Heap_Unit *node1,Heap_Unit *node2){
@@ -42,6 +50,10 @@ static int Cmp_Pos_Unit(Heap_Unit *node1,Heap_Unit *node2){
 
         if( unit_score_1 > unit_score_2 ) return CMP_BIGGER;
         if( unit_score_1 < unit_score_2 ) return CMP_SMALLER;
+
+        //当F相等时，可选最后加入的格子，也可以选H值最低的格子
+        //if ( g_Score_G[x1][y1] < g_Score_G[x2][y2] ) return CMP_SMALLER;
+        //if ( g_Score_G[x1][y1] > g_Score_G[x2][y2] ) return CMP_BIGGER;
 
         if( g_MapUnit_Set[x1][y1] <=g_MapUnit_Set[x2][y2] ) return CMP_SMALLER;
 
@@ -80,6 +92,15 @@ static void MakeMap(Path_Map *map){
         }
 
         g_Map->openlist=CreateHeap( size, Cmp_Pos_Unit );
+
+        if (g_Path_Record){
+            free(g_Path_Record);
+            g_Path_Record=NULL;
+        }
+        g_Path_Record=(Path_Record*)malloc( sizeof(Path_Record) );
+        g_Path_Record->idx=0;
+        g_Path_Record->unit_cnt=0;
+        memset(g_Path_Record->pos_record,0,sizeof(MAP_POS_T) * MAP_MAX_SIZE *2 );
 }
 
 
@@ -214,7 +235,7 @@ static void SearchAroundUnits(MAP_POS_T row, MAP_POS_T col){
                                 value_g=PATH_COST_2 + unit->weight;
                         }
                         value_g+=cur_score;
-                        value_h=( abs( cur_row - exit_x ) + abs( cur_col - exit_y ) ) * PATH_COST_1 * 2;
+                        value_h=PATH_FUNC_H_COST(cur_row,exit_x,cur_col,exit_y);
 
                         unit->score_f = value_g+value_h;
 
@@ -272,6 +293,7 @@ MAP_POS_T Start_AStar(Path_Map *map, MAP_POS_T **result){
         SearchAroundUnits(enter_x,enter_y);
 
         unit=(Map_Pos*)Heap_GetTop(g_Map->openlist);
+        idx=0;
         while( unit ){
                 cur_row=unit->row;
                 cur_col=unit->col;
@@ -282,12 +304,16 @@ MAP_POS_T Start_AStar(Path_Map *map, MAP_POS_T **result){
                         break;
                 }
 
+                g_Path_Record->pos_record[g_Path_Record->idx++]=idx++;
+                g_Path_Record->pos_record[g_Path_Record->idx++]=cur_row;
+                g_Path_Record->pos_record[g_Path_Record->idx++]=cur_col;
+                g_Path_Record->unit_cnt++;
+
                 g_Close_List[cur_row][cur_col]=2;
                 Heap_Pop_Free(g_Map->openlist);
                 SearchAroundUnits(cur_row, cur_col);
 
                 unit=(Map_Pos*)Heap_GetTop(g_Map->openlist);
-
         }
 
 
@@ -319,4 +345,9 @@ MAP_POS_T Start_AStar(Path_Map *map, MAP_POS_T **result){
         ReleaseMap();
         //fprintf(stdout, "Start_AStar total: %ld\n",total);
         return total;
+}
+
+
+Path_Record* GetRecordPos(void){
+        return g_Path_Record;
 }

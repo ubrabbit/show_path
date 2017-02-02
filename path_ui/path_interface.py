@@ -37,9 +37,9 @@ QtCore.QTextCodec.setCodecForLocale(QtCore.QTextCodec.codecForName("system"))
 
 Grid_Color_List=[
         "",
-        "#aaffff","#aaaaff","#00aa7f","#00aaff",
-        "#aa55ff","#555500","#55557f","#00007f",
-        "#aa0000",
+        "#aaaaff","#00aa7f","#00aaff",
+        "#aa55ff","#555500","#55557f",
+        "#00007f","#aa0000",
 ]
 
 
@@ -47,12 +47,20 @@ Color_Enter="#00ff7f"
 Color_Exit="#00ff00"
 Color_Block="#000000"
 
+Color_Search_Pos="#aaffff"
+
 Special_Colors=[Color_Enter,Color_Exit,Color_Block]
 
 Size_Select_List=[10,20,50,80,100,200,]
 
 
 DEFINE_REDIRECT_STDOUT = 1
+
+
+def Log_File(sLog):
+        fobj=file("logfile.txt","a")
+        fobj.write(sLog)
+        fobj.close()
 
 
 class CMyApp(QtGui.QMainWindow):
@@ -87,7 +95,7 @@ class CMyApp(QtGui.QMainWindow):
 
                 self.progressDialog=QtGui.QProgressDialog(self)
                 self.progressDialog.setWindowModality(QtCore.Qt.WindowModal)
-                                        #设置进度对话框出现等待时间，此处设定为 5 秒，默认为 4 秒
+                #设置进度对话框出现等待时间，此处设定为 5 秒，默认为 4 秒
                 self.progressDialog.setMinimumDuration(5)
                 self.progressDialog.setWindowTitle(self.tr("请等待"))
                 self.progressDialog.setLabelText(self.tr("读取..."))
@@ -427,6 +435,16 @@ class CInterface(object):
 
         def SetTableColor(self,row,column,idx):
                 #print "SetTableColor ",row,column,idx
+                pos=(row,column)
+                if idx==self.m_EntranceColor:
+                        if self.m_Parent.m_Grid.m_Pos_Entrance and pos!=self.m_Parent.m_Grid.m_Pos_Entrance:
+                                i,j=self.m_Parent.m_Grid.m_Pos_Entrance
+                                self.SetTableColor(i,j,0)
+                if idx==self.m_ExitColor:
+                        if self.m_Parent.m_Grid.m_Pos_Export and pos!=self.m_Parent.m_Grid.m_Pos_Export:
+                                i,j=self.m_Parent.m_Grid.m_Pos_Export
+                                self.SetTableColor(i,j,0)
+
                 if not self.m_Parent.m_Grid.SetGrid((row,column),idx):
                         QtGui.QMessageBox.information(self.m_Parent,"",self.m_Parent.tr("设置颜色失败"))
                         return 0
@@ -608,12 +626,6 @@ class CGrid(object):
 
 
         def ValidSetGrid(self,pos,iColor):
-                if iColor==self.m_Parent.m_Interface.m_EntranceColor:
-                        if self.m_Pos_Entrance and pos!=self.m_Pos_Entrance:
-                                return False
-                if iColor==self.m_Parent.m_Interface.m_ExitColor:
-                        if self.m_Pos_Export and pos!=self.m_Pos_Export:
-                                return False
                 return True
 
 
@@ -734,6 +746,10 @@ class CPainterPath(QtGui.QWidget):
                 #已经经过的路径列表，初始为出口
                 self.m_PassList=[]
 
+                #搜寻过的坐标 [(i,row,col)]
+                self.m_Pos_Searched=[]
+                self.m_Pos_Searched_Bak=[]
+
                 self.m_Color_Bak={}
 
                 self.setWindowTitle(self.tr("显示窗口"))
@@ -761,7 +777,7 @@ class CPainterPath(QtGui.QWidget):
                 sList=[
                 ("开始","Paint_Start"),("上一步","Paint_Last"),
                 ("下一步","Paint_Next"),("全部执行","Paint_All"),
-                ("重新开始","Paint_Restart"),
+                ("重新开始","Paint_Restart"),("显示搜索过的格子","Show_Searched"),
                 ]
                 oList=[]
                 for sName,sKey in sList:
@@ -783,7 +799,7 @@ class CPainterPath(QtGui.QWidget):
                 label1=QtGui.QLabel(self.tr("c层寻路开销："))
                 label2=QtGui.QLabel(self.tr("0"))
                 label3=QtGui.QLabel(self.tr(" ms"))
-                self.costLabel=label2;
+                self.costLabel=label2
                 label1.setFont(QtGui.QFont('微软雅黑',10))
                 label2.setFont(QtGui.QFont('微软雅黑',10))
                 label3.setFont(QtGui.QFont('微软雅黑',10))
@@ -791,6 +807,26 @@ class CPainterPath(QtGui.QWidget):
                 layout_cost.addWidget(label2)
                 layout_cost.addWidget(label3)
                 rightLayout.addLayout(layout_cost)
+
+                layout_search=QtGui.QHBoxLayout()
+                label1=QtGui.QLabel(self.tr("搜索格子数量："))
+                label2=QtGui.QLabel(self.tr("0"))
+                self.searchLabel=label2
+                label1.setFont(QtGui.QFont('微软雅黑',10))
+                label2.setFont(QtGui.QFont('微软雅黑',10))
+                layout_search.addWidget(label1)
+                layout_search.addWidget(label2)
+                rightLayout.addLayout(layout_search)
+
+                layout_path=QtGui.QHBoxLayout()
+                label1=QtGui.QLabel(self.tr("路径经过的格子数："))
+                label2=QtGui.QLabel(self.tr("0"))
+                self.pathLabel=label2
+                label1.setFont(QtGui.QFont('微软雅黑',10))
+                label2.setFont(QtGui.QFont('微软雅黑',10))
+                layout_path.addWidget(label1)
+                layout_path.addWidget(label2)
+                rightLayout.addLayout(layout_path)
 
                 rightLayout.addStretch(5)
 
@@ -817,6 +853,8 @@ class CPainterPath(QtGui.QWidget):
                         self.Move_All()
                 elif sFlag=="Paint_Restart":
                         self.Move_Restart()
+                elif sFlag=="Show_Searched":
+                        self.Paint_Searched_Grids()
 
 
         def PaintMap(self):
@@ -890,12 +928,19 @@ class CPainterPath(QtGui.QWidget):
 
                 try:
                         self.m_PosList=posList
+                        Log_File("poslen= %d blocklen= %d "%(len(posList),len(self.m_BlockList)))
                         iret=c_path.Regist_Map(self.m_Row,self.m_Col,self.m_Entrance,self.m_Exit,posList,self.m_BlockList)
+                        #iret=self.Test_Regist(self.m_Row,self.m_Col,self.m_Entrance,self.m_Exit,posList,self.m_BlockList)
                         assert(iret==1)
                 except Exception,e:
                         import traceback
                         traceback.print_exc()
                         QtGui.QMessageBox.information(self,"出错",self.tr("注册地图失败！"))
+
+
+        def Test_Regist(self,row,col,pos1,pos2,posList,blockList):
+                print "Test_Regist "
+                return 1
 
 
         def SetColor(self,row,col,sColor):
@@ -905,6 +950,14 @@ class CPainterPath(QtGui.QWidget):
                 #print "Paint Table Set Color ",row,col,sColor
                 return 1
 
+        def Paint_Searched_Grids(self):
+                for idx,row,col in self.m_Pos_Searched:
+                        if (row,col) in self.m_PassList:
+                                continue
+                        self.SetColor(row,col,Color_Search_Pos)
+                        oItem=QtGui.QTableWidgetItem(self.tr("%s"%idx))
+                        self.mapWidget.setItem(row,col,oItem)
+
 
         def Move_Start(self):
                 self.m_Start=1
@@ -913,6 +966,7 @@ class CPainterPath(QtGui.QWidget):
                 self.m_Button_Paint_Next.setEnabled(True)
                 self.m_Button_Paint_All.setEnabled(True)
                 self.m_Button_Paint_Restart.setEnabled(True)
+                self.m_Button_Show_Searched.setEnabled(True)
 
                 try:
                         self.move_all_timer.stop()
@@ -935,10 +989,17 @@ class CPainterPath(QtGui.QWidget):
                         return
                 self.costLabel.setText("%s"%iCost )
 
+                self.m_PathList=[]
                 while (pList):
                         i,j=pList.pop(0),pList.pop(0)
                         self.m_PathList.append( (i,j) )
                 self.m_PathList.reverse()
+                self.pathLabel.setText("%s"%len(self.m_PathList) )
+                self.m_PathList_Bak=self.m_PathList[:]
+
+                self.m_Pos_Searched=list(c_path.GetRecordPos_AStar())
+                self.m_Pos_Searched_Bak=self.m_Pos_Searched[:]
+                self.searchLabel.setText("%s"%len(self.m_Pos_Searched))
 
 
         def Move_Restart(self):
@@ -949,13 +1010,22 @@ class CPainterPath(QtGui.QWidget):
                 self.m_Button_Paint_Next.setEnabled(False)
                 self.m_Button_Paint_All.setEnabled(False)
                 self.m_Button_Paint_Restart.setEnabled(False)
+                self.m_Button_Show_Searched.setEnabled(True)
+
                 self.move_all_timer.stop()
 
                 while(self.m_PathList):
                         row,col=self.m_PassList.pop(-1)
                         self.mapWidget.removeCellWidget(row,col)
-
+                        self.mapWidget.takeItem(row,col)
                 self.m_PathList=self.m_PathList_Bak[:]
+
+                while(self.m_Pos_Searched):
+                        idx,row,col=self.m_Pos_Searched.pop(-1)
+                        self.mapWidget.removeCellWidget(row,col)
+                        self.mapWidget.takeItem(row,col)
+                self.m_Pos_Searched=self.m_Pos_Searched_Bak[:]
+
                 del self.m_Start
                 self.PaintTables()
 
