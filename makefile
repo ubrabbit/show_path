@@ -13,20 +13,20 @@ c_path:	$(objects)
 	-o c_path.so
 
 c_interface.o:c_interface.c
-	gcc c_interface.c ${CFLAGS}
+	gcc c_interface.c $(CFLAGS)
 c_container.o:c_container.c
-	gcc c_container.c ${CFLAGS}
+	gcc c_container.c $(CFLAGS)
 c_list.o:c_list.c
-	gcc c_list.c ${CFLAGS}
+	gcc c_list.c $(CFLAGS)
 c_hash.o:c_hash.c
-	gcc c_hash.c ${CFLAGS}
+	gcc c_hash.c $(CFLAGS)
 c_heap.o:c_heap.c
-	gcc c_heap.c ${CFLAGS}
+	gcc c_heap.c $(CFLAGS)
 c_map.o:c_map.c
-	gcc c_map.c ${CFLAGS}
+	gcc c_map.c $(CFLAGS)
 
 path_astar.o:algorithm/path_astar.c
-	gcc algorithm/path_astar.c ${CFLAGS}
+	gcc algorithm/path_astar.c $(CFLAGS)
 
 .PHONY : clean
 clean:
