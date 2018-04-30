@@ -177,7 +177,7 @@ static PyObject* Path_Start(PyObject *self,PyObject *args){
         total_unit=0;
         total_unit=Start_Algorithm(&result);
         finish=clock();
-        cost=(long)( finish - start );
+        cost=(long)(( finish - start )*1000.0)/CLOCKS_PER_SEC;
 
         tuple_return = PyTuple_New(2);
         tuple_param = PyTuple_New(total_unit*2);

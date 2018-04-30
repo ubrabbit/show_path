@@ -74,7 +74,7 @@ class CMyApp(QtGui.QMainWindow):
                 self.setWindowTitle(self.tr("寻路显示器"))
 
                 screen = QtGui.QDesktopWidget().screenGeometry()
-                self.resize(screen.width(), screen.height())
+                self.resize(screen.width()*3/4, screen.height()*3/4)
 
 
         def __del__(self):
@@ -834,7 +834,7 @@ class CPainterPath(QtGui.QWidget):
                 #设置窗口计时器
                 self.move_all_timer.timeout.connect(self.Move_All_Next)
 
-                iWidth,iHeight=screen.width(), screen.height()
+                iWidth,iHeight=screen.width()*3/4, screen.height()*3/4
                 self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
                 self.resize(iWidth,iHeight)
                 self.setFixedSize(iWidth,iHeight)
